@@ -2,678 +2,205 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1">
 <title>尖塔梗生成器</title>
-<meta name="description" content="输入你的生活场景，AI自动匹配杀戮尖塔卡牌梗。">
-<meta name="theme-color" content="#0d0d1a">
-<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🤖</text></svg>">
 <style>
-/* ============ 基础 ============ */
-:root {
-  --bg: #0d0d1a;
-  --surface: #141428;
-  --surface2: #1a1a32;
-  --gold: #c8a84e;
-  --gold-light: #e0c870;
-  --gold-dim: #8a7030;
-  --blue: #4a9eff;
-  --blue-dim: #3058a0;
-  --red: #e04040;
-  --red-dim: #902020;
-  --purple: #a040e0;
-  --green: #4ac860;
-  --text: #d8d8e0;
-  --text2: #a0a0b0;
-  --text3: #606078;
-  --border: #2a2a40;
-  --radius: 12px;
-}
-*{margin:0;padding:0;box-sizing:border-box;}
-body{
-  font-family: -apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Hiragino Sans GB','Noto Sans SC',sans-serif;
-  background:var(--bg); color:var(--text); min-height:100vh;
-  -webkit-font-smoothing:antialiased;
-  background-image:
-    radial-gradient(ellipse at 20% 20%, rgba(74,158,255,0.04) 0%, transparent 50%),
-    radial-gradient(ellipse at 80% 80%, rgba(160,64,224,0.04) 0%, transparent 50%),
-    radial-gradient(ellipse at 50% 50%, rgba(200,168,78,0.02) 0%, transparent 70%);
-}
+:root{--bg:#0d0d1a;--surface:#141428;--gold:#c8a84e;--gold-dim:#8a7030;--blue:#4a9eff;--red:#e04040;--text:#d8d8e0;--text2:#a0a0b0;--text3:#606078;--border:#2a2a40;--r:12px}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,BlinkMacSystemFont,'PingFang SC','Noto Sans SC',sans-serif;background:var(--bg);color:var(--text);min-height:100vh}
+.app{max-width:600px;margin:0 auto;padding:32px 16px}
 
-/* ============ 主容器 ============ */
-.app{max-width:680px;margin:0 auto;padding:20px 16px 40px;}
+.header{text-align:center;margin-bottom:28px}
+.header .icon{font-size:48px;margin-bottom:8px}
+.header h1{font-size:26px;font-weight:800;color:var(--gold);letter-spacing:3px}
+.header .sub{font-size:13px;color:var(--text3);margin-top:4px}
 
-/* ============ 头部 ============ */
-.header{text-align:center;padding:32px 0 24px;}
-.header .emblem{
-  width:72px;height:72px;margin:0 auto 12px;
-  background:linear-gradient(135deg, var(--surface2), var(--surface));
-  border:2px solid var(--gold-dim);border-radius:20px;
-  display:flex;align-items:center;justify-content:center;
-  font-size:36px;box-shadow:0 0 32px rgba(200,168,78,0.1);
-}
-.header h1{
-  font-size:28px;font-weight:800;letter-spacing:4px;
-  background:linear-gradient(180deg, var(--gold-light), var(--gold-dim));
-  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
-}
-.header .tagline{font-size:13px;color:var(--text3);margin-top:6px;}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:20px;margin-bottom:12px}
 
-/* ============ 模式标签 ============ */
-.modes{display:flex;justify-content:center;gap:6px;margin-bottom:20px;}
-.mode-tab{
-  padding:8px 18px;border-radius:20px;border:1px solid var(--border);
-  background:var(--surface);color:var(--text3);font-size:13px;
-  cursor:pointer;transition:all 0.2s;font-family:inherit;display:flex;align-items:center;gap:5px;
-}
-.mode-tab:hover{color:var(--text2);border-color:#3a3a50;}
-.mode-tab.active{background:var(--surface2);color:var(--blue);border-color:var(--blue-dim);}
-.mode-tab .dot{width:6px;height:6px;border-radius:50%;display:inline-block;}
-.mode-tab .dot.red{background:var(--red);}
-.mode-tab .dot.blue{background:var(--blue);}
+textarea{width:100%;min-height:90px;background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:14px;color:var(--text);font-size:15px;resize:vertical;font-family:inherit;outline:none;line-height:1.7;transition:border .2s}
+textarea:focus{border-color:var(--blue)}
+textarea::placeholder{color:var(--text3)}
 
-.lock-btn{
-  cursor:pointer;font-size:14px;padding:6px 10px;border-radius:50%;
-  transition:all 0.2s;opacity:0.5;background:transparent;border:none;color:var(--text3);
-  display:flex;align-items:center;justify-content:center;
-}
-.lock-btn:hover{opacity:1;background:rgba(255,255,255,0.04);}
-.lock-btn.unlocked{opacity:1;color:var(--gold);}
+.key-row{display:flex;gap:8px;align-items:center;margin-top:10px}
+.key-row input{flex:1;background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:8px 12px;color:var(--text2);font-size:13px;font-family:inherit;outline:none}
+.key-row input:focus{border-color:var(--gold-dim)}
+.key-row .hint{font-size:11px;color:var(--text3);white-space:nowrap}
+.key-saved{font-size:11px;color:#609060}
 
-/* ============ 状态提示 ============ */
-.status-bar{
-  text-align:center;font-size:12px;color:var(--text3);margin-bottom:16px;
-  padding:6px 0;transition:all 0.3s;
-}
-.status-bar.warn{color:#c08040;}
-.status-bar.ok{color:#609060;}
+.btn-row{display:flex;gap:8px;margin-top:12px}
+.btn{padding:11px 28px;border-radius:20px;border:none;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;transition:all .15s}
+.btn:active{transform:scale(.97)}
+.btn-go{background:linear-gradient(135deg,var(--blue),#3060c0);color:#fff;flex:1}
+.btn-go:hover{transform:translateY(-1px)}
+.btn-go:disabled{opacity:.4;cursor:not-allowed;transform:none}
+.btn-ghost{background:transparent;border:1px solid var(--border);color:var(--text2);padding:11px 20px}
 
-/* ============ 输入卡片 ============ */
-.card-panel{
-  background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);
-  padding:20px;margin-bottom:16px;
-}
-.card-panel:focus-within{border-color:#3a3a55;}
+.loader{display:none;text-align:center;padding:16px;color:var(--text3);font-size:13px}
+.loader.show{display:block}
+.loader .spin{width:24px;height:24px;margin:0 auto 8px;border:2px solid var(--border);border-top-color:var(--blue);border-radius:50%;animation:s .7s linear infinite}
+@keyframes s{to{transform:rotate(360deg)}}
 
-.card-panel textarea{
-  width:100%;min-height:88px;background:var(--bg);
-  border:1px solid var(--border);border-radius:10px;padding:14px;
-  color:var(--text);font-size:15px;resize:vertical;font-family:inherit;
-  outline:none;line-height:1.7;transition:border 0.2s;
-}
-.card-panel textarea:focus{border-color:var(--blue-dim);}
-.card-panel textarea::placeholder{color:var(--text3);}
+.result{display:none}
+.result.show{display:block}
 
-/* ============ 操作行 ============ */
-.actions{display:flex;gap:10px;align-items:center;margin-top:12px;flex-wrap:wrap;}
-.actions .hint{font-size:11px;color:var(--text3);}
+.r-card{background:linear-gradient(170deg,#181830,#101020);border:2px solid rgba(200,168,78,.3);border-radius:14px;overflow:hidden;margin-bottom:10px;box-shadow:0 0 20px rgba(200,168,78,.08)}
+.r-top{display:flex;align-items:center;padding:12px 14px;border-bottom:1px solid var(--border);gap:10px}
+.r-cost{width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:16px;background:linear-gradient(135deg,#4a9eff,#2a6ed0);color:#fff}
+.r-name{font-size:18px;font-weight:800;color:var(--gold)}
+.r-type{font-size:11px;color:var(--text3);margin-top:1px}
+.r-body{padding:14px;font-size:14px;line-height:1.8}
+.r-body em{color:var(--gold);font-style:normal;font-weight:700}
+.r-flavor{margin-top:8px;padding-top:8px;border-top:1px dashed #2a2a3a;font-size:12px;color:var(--text3);font-style:italic}
 
-/* 按钮 */
-.btn{
-  padding:10px 24px;border-radius:22px;border:none;
-  font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;
-  letter-spacing:0.5px;transition:all 0.2s;display:inline-flex;align-items:center;gap:6px;
-}
-.btn:active{transform:scale(0.97);}
-.btn:disabled{opacity:0.4;cursor:not-allowed;transform:none;}
+.toast{position:fixed;top:16px;left:50%;transform:translateX(-50%);background:var(--surface);border:1px solid var(--gold-dim);border-radius:20px;padding:10px 22px;color:var(--gold);font-weight:700;font-size:13px;z-index:99;opacity:0;transition:opacity .3s;pointer-events:none}
+.toast.show{opacity:1}
 
-.btn-primary{background:linear-gradient(135deg,var(--blue),#3560c0);color:#fff;box-shadow:0 2px 12px rgba(74,158,255,0.2);}
-.btn-primary:hover:not(:disabled){transform:translateY(-1px);box-shadow:0 4px 18px rgba(74,158,255,0.35);}
+.footer{text-align:center;padding:24px 0;color:var(--text3);font-size:11px;border-top:1px solid var(--border);margin-top:24px}
+.footer a{color:var(--gold-dim);text-decoration:none}
 
-.btn-purple{background:linear-gradient(135deg,var(--purple),#7020b0);color:#fff;box-shadow:0 2px 12px rgba(160,64,224,0.2);}
-.btn-purple:hover:not(:disabled){transform:translateY(-1px);box-shadow:0 4px 18px rgba(160,64,224,0.35);}
-
-.btn-ghost{background:transparent;border:1px solid var(--border);color:var(--text2);}
-.btn-ghost:hover{background:rgba(255,255,255,0.03);border-color:#4a4a60;}
-
-/* 图片上传 */
-.upload-trigger{
-  display:inline-flex;align-items:center;gap:5px;padding:6px 14px;
-  border-radius:16px;border:1px dashed var(--border);
-  color:var(--text3);font-size:12px;cursor:pointer;transition:all 0.2s;
-}
-.upload-trigger:hover{border-color:var(--gold-dim);color:var(--gold);}
-.upload-trigger.has-image{border-color:var(--blue-dim);color:var(--blue);border-style:solid;}
-.upload-trigger img{width:20px;height:20px;border-radius:4px;object-fit:cover;}
-.upload-trigger .remove{padding:2px 6px;border-radius:8px;color:var(--red);cursor:pointer;font-size:11px;}
-input[type=file]{display:none;}
-
-/* ============ 快捷标签 ============ */
-.tags{display:flex;flex-wrap:wrap;gap:6px;margin-top:12px;}
-.tag{
-  padding:4px 12px;border-radius:14px;background:rgba(255,255,255,0.03);
-  border:1px solid var(--border);color:var(--text3);font-size:12px;
-  cursor:pointer;transition:all 0.15s;font-family:inherit;
-}
-.tag:hover{background:rgba(200,168,78,0.06);border-color:var(--gold-dim);color:var(--gold);}
-
-/* ============ 加载 ============ */
-.loader{display:none;text-align:center;padding:28px;}
-.loader.show{display:block;}
-.loader .ring{
-  width:32px;height:32px;margin:0 auto 10px;
-  border:2px solid var(--border);border-top-color:var(--blue);
-  border-radius:50%;animation:spin 0.7s linear infinite;
-}
-@keyframes spin{to{transform:rotate(360deg);}}
-.loader .msg{color:var(--text3);font-size:13px;}
-
-/* ============ 结果 ============ */
-.results{display:none;}
-.results.show{display:block;}
-
-.result-bar{
-  background:var(--surface);border:1px solid var(--border);
-  border-radius:10px;padding:10px 14px;margin-bottom:12px;
-  font-size:12px;color:var(--text3);display:flex;align-items:center;gap:8px;
-}
-.result-bar .dot{width:5px;height:5px;border-radius:50%;background:var(--gold);animation:pulse 2s infinite;}
-@keyframes pulse{0%,100%{box-shadow:0 0 3px var(--gold);}50%{box-shadow:0 0 10px var(--gold);}}
-
-/* ============ 结果卡牌 ============ */
-.result-card{
-  background:linear-gradient(170deg,#181830,#101020);
-  border:2px solid var(--border);border-radius:14px;
-  overflow:hidden;margin-bottom:10px;transition:all 0.3s;
-}
-.result-card.rare{border-color:rgba(200,168,78,0.35);box-shadow:0 0 20px rgba(200,168,78,0.1);}
-.result-card.uncommon{border-color:rgba(74,158,255,0.25);}
-.result-card.curse{border-color:rgba(224,64,64,0.25);}
-
-.result-card .card-top{
-  display:flex;align-items:center;padding:12px 14px;
-  border-bottom:1px solid var(--border);gap:10px;
-}
-.result-card .cost-orb{
-  width:34px;height:34px;border-radius:50%;
-  display:flex;align-items:center;justify-content:center;
-  font-weight:800;font-size:17px;flex-shrink:0;
-}
-.cost-0{background:#4a4a55;color:#bbb;}
-.cost-1{background:linear-gradient(135deg,#4a9eff,#2a6ed0);color:#fff;}
-.cost-2{background:linear-gradient(135deg,#a040e0,#7020b0);color:#fff;}
-.cost-3{background:linear-gradient(135deg,#e0a040,#b06020);color:#fff;}
-.cost-x,.cost-inf{background:linear-gradient(135deg,#e04040,#a02020);color:#fff;}
-
-.result-card .card-info{flex:1;min-width:0;}
-.result-card .card-name{font-size:18px;font-weight:800;}
-.result-card .card-sub{font-size:11px;color:var(--text3);margin-top:1px;}
-
-.name-gold{color:var(--gold);}
-.name-blue{color:var(--blue);}
-.name-red{color:var(--red);}
-.name-purple{color:var(--purple);}
-.name-green{color:var(--green);}
-
-.result-card .card-body{padding:14px;}
-.result-card .card-effect{font-size:14px;line-height:1.8;color:var(--text);white-space:pre-line;}
-.result-card .card-effect em{color:var(--gold);font-style:normal;font-weight:700;}
-.result-card .card-flavor{
-  margin-top:8px;padding-top:8px;border-top:1px dashed #2a2a3a;
-  font-size:12px;color:var(--text3);font-style:italic;line-height:1.5;
-}
-.result-card .card-meta{
-  display:flex;flex-wrap:wrap;gap:5px;padding:0 14px 12px;
-}
-.result-card .card-meta span{
-  padding:2px 8px;border-radius:8px;font-size:11px;
-  font-weight:600;border:1px solid;
-}
-.meta-gold{color:var(--gold);background:rgba(200,168,78,0.06);border-color:rgba(200,168,78,0.2)!important;}
-.meta-blue{color:var(--blue);background:rgba(74,158,255,0.05);border-color:rgba(74,158,255,0.15)!important;}
-.meta-red{color:var(--red);background:rgba(224,64,64,0.05);border-color:rgba(224,64,64,0.15)!important;}
-.meta-green{color:var(--green);background:rgba(74,200,96,0.05);border-color:rgba(74,200,96,0.15)!important;}
-
-.badge-best{
-  font-size:10px;padding:2px 8px;border-radius:6px;
-  color:var(--gold);background:rgba(200,168,78,0.1);
-  border:1px solid rgba(200,168,78,0.2);
-}
-
-/* ============ 分享 ============ */
-.share-row{display:flex;gap:8px;margin-top:14px;align-items:center;}
-.share-row input{
-  flex:1;background:var(--bg);border:1px solid var(--border);
-  border-radius:8px;padding:8px 12px;color:var(--text3);font-size:12px;
-  font-family:inherit;outline:none;
-}
-.share-row .copy-btn{
-  padding:6px 16px;border-radius:14px;border:1px solid var(--gold-dim);
-  background:transparent;color:var(--gold);font-size:12px;
-  cursor:pointer;transition:all 0.2s;font-family:inherit;flex-shrink:0;
-}
-.share-row .copy-btn:hover{background:rgba(200,168,78,0.08);}
-.share-row .copy-btn.done{border-color:var(--green);color:var(--green);}
-
-/* ============ 弹窗 ============ */
-.overlay{
-  display:none;position:fixed;top:0;left:0;width:100%;height:100%;
-  background:rgba(0,0,0,0.65);z-index:200;
-  align-items:center;justify-content:center;padding:20px;
-}
-.overlay.show{display:flex;}
-.modal{
-  background:var(--surface);border:1px solid var(--border);
-  border-radius:var(--radius);padding:22px;max-width:380px;width:100%;
-  animation:modalIn 0.2s ease;
-}
-@keyframes modalIn{from{opacity:0;transform:translateY(8px) scale(0.98);}to{opacity:1;transform:translateY(0) scale(1);}}
-.modal h3{font-size:16px;margin-bottom:10px;color:var(--text);}
-.modal .desc{font-size:12px;color:var(--text3);margin-bottom:14px;line-height:1.6;}
-.modal input[type=password],.modal input[type=text]{
-  width:100%;padding:10px 12px;border-radius:10px;border:1px solid var(--border);
-  background:var(--bg);color:var(--text);font-size:14px;font-family:inherit;
-  outline:none;margin-bottom:10px;transition:border 0.2s;
-}
-.modal input:focus{border-color:var(--blue-dim);}
-.modal .err{font-size:11px;color:var(--red);margin-bottom:8px;display:none;}
-.modal .err.show{display:block;}
-.modal .btns{display:flex;gap:8px;justify-content:flex-end;}
-.modal .btns button{
-  padding:8px 18px;border-radius:16px;border:none;font-size:13px;
-  cursor:pointer;font-family:inherit;font-weight:600;transition:all 0.2s;
-}
-.modal .btn-ok{background:linear-gradient(135deg,var(--blue),#3060c0);color:#fff;}
-.modal .btn-no{background:transparent;border:1px solid var(--border);color:var(--text3);}
-.modal .divider{text-align:center;color:var(--text3);font-size:11px;margin:12px 0;}
-.modal .status{font-size:12px;padding:8px 12px;border-radius:8px;margin-bottom:10px;display:none;}
-.modal .status.ok{display:block;background:rgba(74,200,96,0.06);color:var(--green);border:1px solid rgba(74,200,96,0.15);}
-.modal .status.info{display:block;background:rgba(74,158,255,0.06);color:var(--blue);border:1px solid rgba(74,158,255,0.15);}
-
-/* ============ Toast ============ */
-.toast{
-  position:fixed;top:16px;left:50%;transform:translateX(-50%);
-  background:var(--surface2);border:1px solid var(--gold-dim);
-  border-radius:20px;padding:10px 22px;color:var(--gold);font-weight:700;
-  font-size:13px;box-shadow:0 4px 24px rgba(0,0,0,0.4);
-  z-index:300;opacity:0;transition:opacity 0.3s;pointer-events:none;
-}
-.toast.show{opacity:1;}
-
-/* ============ 页脚 ============ */
-.footer{
-  text-align:center;padding:24px 0 8px;color:var(--text3);font-size:11px;
-  border-top:1px solid var(--border);margin-top:32px;
-}
-.footer a{color:var(--gold-dim);text-decoration:none;}
-.footer a:hover{color:var(--gold);}
-
-/* ============ 响应式 ============ */
-@media(max-width:480px){
-  .app{padding:12px 10px 32px;}
-  .header{padding:20px 0 16px;}
-  .header .emblem{width:56px;height:56px;font-size:28px;border-radius:16px;}
-  .header h1{font-size:22px;}
-  .mode-tab{padding:6px 14px;font-size:12px;}
-  .result-card .card-name{font-size:16px;}
-}
+@media(max-width:480px){.app{padding:16px 10px}.header h1{font-size:20px}}
 </style>
 </head>
 <body>
-
 <div class="app">
-  <!-- ===== 头部 ===== -->
-  <header class="header">
-    <div class="emblem">🤖</div>
+  <div class="header">
+    <div class="icon">🤖</div>
     <h1>尖 塔 梗 生 成 器</h1>
-    <p class="tagline">你说句话 &nbsp;→&nbsp; 鸡煲笑话</p>
-  </header>
-
-  <!-- ===== 模式标签 ===== -->
-  <div class="modes">
-    <button class="mode-tab active" onclick="setMode('ai')" id="tabAi">
-      <span class="dot blue"></span> AI 模式
-    </button>
-    <button class="mode-tab" onclick="setMode('local')" id="tabLocal">
-      <span class="dot red"></span> 闪电
-    </button>
-    <button class="lock-btn" id="lockBtn" onclick="openSettings()" title="AI 访问设置">🔒</button>
+    <p class="sub">输入你的遭遇 → AI 自动翻译成鸡煲笑话</p>
   </div>
 
-  <!-- ===== 状态条 ===== -->
-  <div class="status-bar warn" id="statusBar">🔒 AI 模式已锁定 — 点击 🔒 解锁，或使用右侧闪电模式</div>
+  <div class="card">
+    <textarea id="textInput" placeholder="描述你的情况…&#10;比如：今天学了六个单元学不下去了" maxlength="400"></textarea>
 
-  <!-- ===== 输入区 ===== -->
-  <div class="card-panel">
-    <textarea id="textInput" placeholder="描述你的情况…&#10;&#10;「今天学了六个单元学不下去了」&#10;「考试周连续五天考试」&#10;「debug 三小时发现少了个分号」" maxlength="600"></textarea>
-
-    <div class="tags">
-      <button class="tag" onclick="fill('今天学了六个单元就学不下去了')">学不动了</button>
-      <button class="tag" onclick="fill('考试周连续五天考试')">考试周</button>
-      <button class="tag" onclick="fill('室友打呼噜一晚上没睡好')">室友打呼噜</button>
-      <button class="tag" onclick="fill('debug三小时发现少了个分号')">debug 崩溃</button>
-      <button class="tag" onclick="fill('期末复习三天结果考试全不会')">复习白费</button>
-      <button class="tag" onclick="fill('灵感来了疯狂写代码忘了吃饭')">心流状态</button>
-      <button class="tag" onclick="fill('周末一觉睡到下午两点')">周末补觉</button>
+    <div class="key-row">
+      <input type="password" id="keyInput" placeholder="输入 API Key（只存浏览器）" autocomplete="off">
+      <span class="hint" id="keyHint">🔒 未保存</span>
     </div>
 
-    <div class="actions">
-      <button class="btn btn-primary" id="btnAI" onclick="analyzeAI()">🤖 分析</button>
-      <button class="btn btn-ghost" id="btnLocal" onclick="analyzeLocal()" style="display:none">⚡ 分析</button>
-      <button class="btn btn-ghost" onclick="randomGo()">🎲 随机</button>
-      <span class="upload-trigger" id="uploadTrigger" onclick="document.getElementById('imgInput').click()">📷 图片</span>
-      <input type="file" id="imgInput" accept="image/*" onchange="handleImage(event)">
-      <span class="hint">Ctrl+Enter 快速分析</span>
+    <div class="btn-row">
+      <button class="btn btn-go" id="btnGo" onclick="go()">🤖 生成梗</button>
     </div>
   </div>
 
-  <!-- ===== 加载 ===== -->
-  <div class="loader" id="loader">
-    <div class="ring"></div>
-    <div class="msg" id="loaderMsg">正在启动……</div>
-  </div>
+  <div class="loader" id="loader"><div class="spin"></div>AI 正在分析…</div>
+  <div class="result" id="result"></div>
 
-  <!-- ===== 结果区 ===== -->
-  <div class="results" id="results"></div>
-
-  <!-- ===== 页脚 ===== -->
-  <footer class="footer">
-    由 <strong>地大夏目夏目夏</strong> 制作 &nbsp;·&nbsp;
-    基于《杀戮尖塔》社区梗文化 &nbsp;·&nbsp;
-    <a href="https://github.com/liuqqqtianqqqhaoqqq/spire-meme-generator" target="_blank">GitHub</a>
-  </footer>
-</div>
-
-<!-- ===== 设置弹窗 ===== -->
-<div class="overlay" id="settingsOverlay">
-  <div class="modal">
-    <h3>⚙️ 解锁 AI 模式</h3>
-    <p class="desc">AI 模式需要解锁才能使用。输入密码可使用站长的 API，或填入你自己的 Key。</p>
-    <div class="status" id="unlockStatus"></div>
-    <input type="password" id="pwdInput" placeholder="输入访问密码" autocomplete="off">
-    <div class="err" id="pwdErr">密码错误，请重试</div>
-    <div class="btns">
-      <button class="btn-no" onclick="closeSettings()">取消</button>
-      <button class="btn-ok" onclick="unlockWithPassword()">解锁</button>
-    </div>
-    <div class="divider">或者使用自己的 Key</div>
-    <input type="text" id="keyInput" placeholder="sk-xxxxxxxx" autocomplete="off">
-    <p style="font-size:11px;color:var(--text3);margin:-4px 0 10px;">Key 只存在你的浏览器里，不发送到服务器</p>
-    <div class="btns">
-      <button class="btn-no" onclick="closeSettings()">取消</button>
-      <button class="btn-ok" onclick="saveOwnKey()">保存 Key</button>
-    </div>
+  <div class="footer">
+    由 <strong>地大夏目夏目夏</strong> 制作 · 基于《杀戮尖塔》社区梗文化
   </div>
 </div>
 
-<!-- ===== Toast ===== -->
 <div class="toast" id="toast"></div>
 
 <script>
-// ============ 状态 ============
-let mode = 'ai';
-let imgB64 = null;
-let imgName = '';
-let aiUnlocked = false;
-let userKey = '';
-let unlockPwd = '';
+const API_URL='https://api-slb.packyapi.com/v1/chat/completions';
+const MODEL='deepseek-v4-flash';
 
-// ============ 初始化 ============
-(function init(){
-  if(localStorage.getItem('sts_ai_unlocked')==='1'){aiUnlocked=true;unlockPwd=localStorage.getItem('sts_password')||'';}
-  if(localStorage.getItem('sts_user_key')){userKey=localStorage.getItem('sts_user_key');}
-  updateLockUI();
-  setMode(mode);
-})();
+const SP=`你是尖塔梗大师。用户描述生活场景，你用杀戮尖塔卡牌梗来"翻译"。
 
-// ============ 模式切换 ============
-function setMode(m){
-  mode=m;
-  document.getElementById('tabAi').classList.toggle('active',m==='ai');
-  document.getElementById('tabLocal').classList.toggle('active',m==='local');
-  document.getElementById('btnAI').style.display=m==='ai'?'':'none';
-  document.getElementById('btnLocal').style.display=m==='local'?'':'none';
+卡牌速查：
+凡庸-手牌太多打不出 → 任务多到做不动
+偏差认知-+4集中每回合-1 → 以为自己会了其实全忘光
+鬼抽-关键牌沉底 → 运气极差/考试考没复习的
+还在启动-迟迟不开始 → 拖延症
+回响形态-触发两次 → 复读机
+循环-死循环 → debug地狱
+内核加速-0费+能量 → 喝咖啡提神
+自我修复-战后回血 → 休息恢复
+耗尽-透支 → 熬夜爆肝
+裂变-消耗球→ 多任务并行
+重启-洗牌重抽 → 推倒重来
+碎片整理-+集中 → 收拾整理
+硬化-+格挡 → 被打击后变强
+伤口-不可打出 → 水课/没用
+虚无-不打消失 → 错过机会
+混沌-随机填充 → 一团糟/系统崩
+创造性AI-生成能力牌 → 灵感迸发
+机器学习-多抽牌 → 每天背单词
+精良改造-费递减 → 越做越顺手
+万物一心-回收0费 → 心流状态
+第四强角色-最弱 → 鸡煲自嘲
 
-  const bar=document.getElementById('statusBar');
-  if(m==='ai'&&!aiUnlocked&&!userKey){
-    bar.textContent='🔒 AI 模式已锁定 — 点击 🔒 解锁，或切换到闪电模式';
-    bar.className='status-bar warn';
-  }else if(m==='ai'){
-    bar.textContent=(aiUnlocked?'✅ 已解锁':'🗝️ 自有 Key')+' — AI 模式就绪';
-    bar.className='status-bar ok';
-  }else{
-    bar.textContent='⚡ 闪电模式 — 本地关键词匹配，离线可用';
-    bar.className='status-bar';
-  }
+输出纯JSON，不要markdown代码块：{"analysis":"一句话分析","cards":[{"name":"卡牌名","cost":"1","cost_color":"gold或blue或red","card_type":"能力/技能/诅咒/状态","rarity":"rare/uncommon/curse","character":"defect","effect":"梗化效果(结合用户场景)","flavor":"风味梗句","severity":"savage/funny/positive/healing"}]}`;
+
+let savedKey='';
+
+// 初始化：读localStorage
+try{savedKey=localStorage.getItem('sts_key')||''}catch(e){}
+if(savedKey){document.getElementById('keyInput').value=savedKey.slice(0,8)+'***';document.getElementById('keyHint').textContent='✅ 已保存';document.getElementById('keyHint').className='key-saved'}
+document.getElementById('keyInput').onfocus=function(){if(savedKey)this.value=''}
+
+// 保存Key
+function saveKey(){
+  const v=document.getElementById('keyInput').value.trim();
+  if(!v)return;
+  if(!v.startsWith('sk-')){t('Key格式应为sk-开头');return}
+  savedKey=v;
+  try{localStorage.setItem('sts_key',v)}catch(e){}
+  document.getElementById('keyInput').value=v.slice(0,8)+'***';
+  document.getElementById('keyHint').textContent='✅ 已保存';
+  document.getElementById('keyHint').className='key-saved';
+  t('Key已保存 ✅');
 }
+document.getElementById('keyInput').onchange=saveKey;
+document.getElementById('keyInput').onblur=saveKey;
 
-// ============ 图片 ============
-function handleImage(e){
-  const f=e.target.files[0];if(!f)return;
-  if(f.size>10*1024*1024){toast('图片太大');return;}
-  imgName=f.name;
-  const r=new FileReader();
-  r.onload=ev=>{imgB64=ev.target.result.split(',')[1];document.getElementById('uploadTrigger').classList.add('has-image');document.getElementById('uploadTrigger').textContent='📷 '+f.name.substring(0,12);};
-  r.readAsDataURL(f);
-}
-
-// ============ 系统提示词（浏览器端AI用） ============
-const AI_SP = `你是尖塔梗翻译官。用户描述场景，你用杀戮尖塔卡牌来"翻译"它。卡牌：凡庸(任务太多) 偏差认知(以为会了其实不会) 鬼抽(运气差) 还在启动(拖延) 回响形态(复读) 循环(死循环) 内核加速(咖啡提神) 自我修复(休息) 耗尽(熬夜) 裂变(多任务) 重启(重来) 碎片整理(收拾) 硬化(变强) 搜寻(找东西) 伤口(水课) 虚无(错过) 混沌(崩了) 创造性AI(灵感) 机器学习(积累) 精良改造(顺手) 万物一心(心流) 第四强角色(鸡煲最弱)。返回纯JSON:{"analysis":"分析","cards":[{"name":"卡牌名","cost":"1","cost_color":"gold/blue/red","card_type":"能力","rarity":"rare/uncommon/curse","character":"defect","effect":"效果结合场景","flavor":"风味梗句","severity":"savage/funny/positive/healing"}]}`;
-
-// ============ AI 分析：浏览器直连 packyapi ============
-async function analyzeAI(){
+async function go(){
   const text=document.getElementById('textInput').value.trim();
-  if(!text&&!imgB64){toast('请输入文字或上传图片');return;}
-  if(!userKey){toast('请先在 🔒 里保存 API Key');openSettings();return;}
+  if(!text){t('请输入文字');return}
+  if(!savedKey){saveKey();if(!savedKey){t('请先填写API Key');return}}
 
-  loader(true,'AI 分析中……');
-  document.getElementById('results').classList.remove('show');
-  document.getElementById('btnAI').disabled=true;
+  showLoader(true);
+  document.getElementById('result').classList.remove('show');
+  document.getElementById('btnGo').disabled=true;
 
   try{
-    const msgs=[{role:'system',content:AI_SP}];
-    if(imgB64){
-      msgs.push({role:'user',content:[
-        {type:'image_url',image_url:{url:`data:image/png;base64,${imgB64}`}},
-        {type:'text',text:text||'分析图片'}
-      ]});
-    }else{
-      msgs.push({role:'user',content:text||'分析图片'});
-    }
-
-    const resp=await fetch('https://api-slb.packyapi.com/v1/chat/completions',{
+    const resp=await fetch(API_URL,{
       method:'POST',
-      headers:{'Content-Type':'application/json','Authorization':'Bearer '+userKey},
-      body:JSON.stringify({model:'gpt-5.5',messages:msgs,max_tokens:800,temperature:0.7})
+      headers:{'Content-Type':'application/json','Authorization':'Bearer '+savedKey},
+      body:JSON.stringify({model:MODEL,messages:[{role:'system',content:SP},{role:'user',content:'场景："'+text+'"。匹配最合适的卡牌，只输出JSON，不要markdown代码块。'}],max_tokens:800,temperature:0.7})
     });
-
-    if(!resp.ok){throw new Error('API 返回 '+resp.status);}
-
+    if(!resp.ok){throw new Error('API '+resp.status)}
     const data=await resp.json();
     let raw=data.choices[0].message.content.trim();
     if(raw.startsWith('```'))raw=raw.replace(/```json\n?|```/g,'').trim();
 
     let result;
-    try{result=JSON.parse(raw);}
-    catch{result={analysis:'AI生成',cards:[{name:'偏差认知',cost:'1',cost_color:'gold',card_type:'能力',rarity:'rare',character:'defect',effect:raw.slice(0,300),flavor:'「AI 生成」',severity:'funny'}]};}
+    try{result=JSON.parse(raw)}catch(e){result={analysis:'AI返回',cards:[{name:'偏差认知',cost:'1',cost_color:'gold',card_type:'能力',rarity:'rare',character:'defect',effect:raw.slice(0,300),flavor:'AI 生成',severity:'funny'}]}}
 
-    (result.cards||[]).forEach(c=>{if(!['savage','funny','positive','healing'].includes(c.severity))c.severity='funny';});
-    loader(false);
-    render(result,text||'图片分析');
+    showLoader(false);
+    render(result,text);
   }catch(err){
-    console.error('AI Error:', err.message, err);
-    loader(false);
-    toast('AI 调用失败: ' + (err.message||'未知错误').slice(0,30));
-    analyzeLocal();
+    console.error(err);
+    showLoader(false);
+    t('AI调用失败: '+err.message.slice(0,30));
   }finally{
-    document.getElementById('btnAI').disabled=false;
+    document.getElementById('btnGo').disabled=false;
   }
 }
 
-// ============ 本地分析 ============
-function analyzeLocal(){
-  const text=document.getElementById('textInput').value.trim();
-  if(!text){toast('请输入文字');return;}
-  if(text.length<2){toast('多说两句嘛');return;}
-  loader(true,'匹配中……');
-  setTimeout(()=>{
-    loader(false);
-    const cards=localMatch(text);
-    render({analysis:'本地关键词匹配',cards},text);
-  },300);
-}
-
-// ============ 随机 ============
-function randomGo(){
-  const s=['今天学了六个单元就学不下去了','考试周连续五天考试累死了','室友打呼噜一晚上没睡好','喝了两杯咖啡肝完了论文','做了一下午实验发现数据全错了','课表排了六节连堂','期末复习三天结果考试全不会','任务太多了一个都做不动','被老师骂了一顿然后进步了','灵感来了疯狂写代码三小时忘了吃饭','教务系统抢课又崩了','周末一觉睡到下午两点','debug三小时发现少了个分号','食堂排队排到菜没了','同时写五份作业快疯了','这学期选了一门巨水的课','收藏夹里一堆教程从来没看过','小组作业队友全在划水','课上到一半突然被点名','刚开学就感觉已经跟不上了'];
-  document.getElementById('textInput').value=s[Math.floor(Math.random()*s.length)];
-  if(mode==='ai')analyzeAI();else analyzeLocal();
-}
-
-// ============ 渲染 ============
-function render(data,inputText){
-  const p=document.getElementById('results');
+function render(data,text){
+  const p=document.getElementById('result');
   const cards=data.cards||[];
-  const short=inputText.length>35?inputText.slice(0,35)+'…':inputText;
-  let h='';
+  const c=cards[0]||{};
+  const sev=c.severity==='savage'?'💀':c.severity==='funny'?'😂':'✨';
 
-  h+=`<div class="result-bar"><div class="dot"></div>${data.analysis||''} — "${short}" → ${cards.length} 张</div>`;
-
-  cards.forEach((c,i)=>{
-    const rc=c.rarity==='rare'?'rare':c.rarity==='curse'?'curse':c.rarity==='uncommon'?'uncommon':'';
-    const costCls=c.cost==='∞'||c.cost==='?'?'cost-inf':isNaN(c.cost)||Number(c.cost)>3?'cost-x':'cost-'+c.cost;
-    const nc=c.cost_color==='gold'?'name-gold':c.cost_color==='red'?'name-red':c.cost_color==='purple'?'name-purple':c.cost_color==='green'?'name-green':'name-blue';
-    const sev=c.severity==='savage'?'💀':c.severity==='funny'?'😂':c.severity==='positive'?'✨':'💚';
-    const mc=c.rarity==='rare'?'meta-gold':c.rarity==='curse'?'meta-red':c.rarity==='uncommon'?'meta-blue':'meta-green';
-    const charMap={defect:'鸡煲',ironclad:'战士',silent:'猎手',watcher:'观者',neutral:'无色'};
-
-    h+=`<div class="result-card ${rc}">
-      <div class="card-top">
-        <div class="cost-orb ${costCls}">${c.cost}</div>
-        <div class="card-info">
-          <div class="card-name ${nc}">${c.name}</div>
-          <div class="card-sub">${c.card_type||'卡牌'} · ${charMap[c.character]||c.character||'鸡煲'}</div>
-        </div>
-        ${i===0?'<span class="badge-best">最佳</span>':''}
-        <span>${sev}</span>
-      </div>
-      <div class="card-body">
-        <div class="card-effect">${(c.effect||'').replace(/\\n/g,'<br>')}</div>
-        ${c.flavor?`<div class="card-flavor">${c.flavor}</div>`:''}
-      </div>
-      <div class="card-meta">
-        <span class="${mc}">${c.card_type||'卡牌'}</span>
-        <span class="${mc}">${sev} ${c.severity==='savage'?'暴击':c.severity==='funny'?'搞笑':c.severity==='positive'?'正能量':'治愈'}</span>
-        ${c.rarity?`<span class="${mc}">${c.rarity==='rare'?'稀有':c.rarity==='uncommon'?'罕见':c.rarity==='curse'?'诅咒':c.rarity==='common'?'普通':'基础'}</span>`:''}
-      </div>
-    </div>`;
-  });
-
-  // 分享
-  const share=cards.map(c=>`【${c.name}】${c.flavor||c.effect?.split('\\n')[0]||''}`).join('\n');
-  h+=`<div class="share-row">
-    <input value="${share.replace(/"/g,'&quot;')}" readonly id="shareInput">
-    <button class="copy-btn" onclick="copyShare()">复制</button>
-  </div>`;
-
-  p.innerHTML=h;
+  p.innerHTML=`
+    <div class="r-card">
+      <div class="r-top"><div class="r-cost">${c.cost||1}</div><div><div class="r-name">${c.name||'偏差认知'}</div><div class="r-type">${c.card_type||'能力'} · 鸡煲</div></div><span style="font-size:22px">${sev}</span></div>
+      <div class="r-body">${(c.effect||'').replace(/\n/g,'<br>')}</div>
+      ${c.flavor?`<div class="r-flavor">${c.flavor}</div>`:''}
+    </div>
+    <div style="text-align:center;margin-top:8px;font-size:11px;color:var(--text3)">${data.analysis||''}</div>
+  `;
   p.classList.add('show');
   p.scrollIntoView({behavior:'smooth',block:'nearest'});
 }
 
-function copyShare(){
-  const inp=document.getElementById('shareInput');if(!inp)return;
-  inp.select();document.execCommand('copy');
-  const btn=document.querySelector('.copy-btn');
-  btn.textContent='已复制';btn.classList.add('done');
-  toast('已复制！去迫害朋友吧 😂');
-  setTimeout(()=>{btn.textContent='复制';btn.classList.remove('done');},2000);
-}
+function t(msg){const e=document.getElementById('toast');e.textContent=msg;e.classList.add('show');setTimeout(()=>e.classList.remove('show'),2200)}
+function showLoader(s){document.getElementById('loader').classList.toggle('show',s)}
 
-// ============ 设置 ============
-function openSettings(){
-  document.getElementById('settingsOverlay').classList.add('show');
-  document.getElementById('pwdInput').value='';
-  document.getElementById('keyInput').value=userKey;
-  document.getElementById('pwdErr').classList.remove('show');
-  updateUnlockStatus();
-  setTimeout(()=>document.getElementById('pwdInput').focus(),200);
-}
-function closeSettings(){
-  document.getElementById('settingsOverlay').classList.remove('show');
-  setMode(mode);
-}
-function updateUnlockStatus(){
-  const s=document.getElementById('unlockStatus');
-  if(aiUnlocked){s.className='status ok';s.textContent='✅ 已解锁 — AI 模式可用';}
-  else if(userKey){s.className='status info';s.textContent='🗝️ 当前使用自有 Key';}
-  else{s.className='status';}
-}
-
-async function unlockWithPassword(){
-  const pwd=document.getElementById('pwdInput').value.trim();
-  if(!pwd){document.getElementById('pwdErr').classList.add('show');return;}
-  document.getElementById('pwdErr').classList.remove('show');
-
-  const apiUrl=window.location.hostname==='localhost'?'http://localhost:8765/api/analyze':'https://spire-meme-generator-production.up.railway.app/api/analyze';
-  try{
-    const resp=await fetch(apiUrl,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({text:'verify',password:pwd,verify_only:true})});
-    if(resp.ok){
-      aiUnlocked=true;unlockPwd=pwd;userKey='';
-      localStorage.setItem('sts_ai_unlocked','1');localStorage.setItem('sts_password',pwd);
-      localStorage.removeItem('sts_user_key');
-      updateLockUI();updateUnlockStatus();
-      toast('✅ AI 模式已解锁！');
-      setMode('ai');closeSettings();
-    }else{
-      document.getElementById('pwdErr').classList.add('show');
-    }
-  }catch(e){toast('无法连接服务器');}
-}
-
-function saveOwnKey(){
-  const key=document.getElementById('keyInput').value.trim();
-  if(!key){toast('请输入 API Key');return;}
-  if(!key.startsWith('sk-')){toast('Key 格式应为 sk- 开头');return;}
-  userKey=key;aiUnlocked=false;unlockPwd='';
-  localStorage.setItem('sts_user_key',key);localStorage.removeItem('sts_ai_unlocked');localStorage.removeItem('sts_password');
-  updateLockUI();updateUnlockStatus();
-  toast('✅ 已保存你的 Key！');
-  setMode('ai');closeSettings();
-}
-
-function updateLockUI(){
-  const btn=document.getElementById('lockBtn');
-  if(aiUnlocked||userKey){btn.textContent='🔓';btn.classList.add('unlocked');btn.title='AI 已解锁';}
-  else{btn.textContent='🔒';btn.classList.remove('unlocked');btn.title='AI 已锁定';}
-}
-
-// ============ 本地卡牌库 ============
-function localMatch(text){
-  const lower=text.toLowerCase();
-  const db=[
-    {name:'还在启动',cost:'?',cost_color:'gold',card_type:'状态',rarity:'basic',character:'defect',effect:'每回合：<em>继续启动</em>。\n别人都完成了，你还没启动。',flavor:'「通电、开机、自检、启动——被一巴掌拍在电源键上。」',severity:'funny',kw:['还没开始','拖延','还没好','等一下','磨蹭','论文还没写','作业还没做','一直没开始']},
-    {name:'偏差认知',cost:'1',cost_color:'gold',card_type:'能力',rarity:'rare',character:'defect',effect:'获得 <em>4 点集中</em>。\n每回合 -1。\n你以为你会了，其实不会。',flavor:'「你觉得自己成型了——这本身就是一种偏差认知。」',severity:'savage',kw:['以为','觉得','学会了','复习','考前','考试','忘记','忘了','没考好','白复习','原来','没想到']},
-    {name:'凡庸',cost:'∞',cost_color:'red',card_type:'诅咒',rarity:'curse',character:'neutral',effect:'不可打出。\n你的手牌<em>太多了</em>，这一张打不出来。',flavor:'「抓了那么多牌，一张都打不出去——凡庸。」',severity:'funny',kw:['太多','太多了','做不完','做不动','学不完','学不动','学不下去','做不下去','课多','作业多','一堆','六个','七个','八个','九个','十个','好多','排满','超额']},
-    {name:'鬼抽',cost:'0',cost_color:'red',card_type:'状态',rarity:'curse',character:'neutral',effect:'抽到的全是<em>打击</em>和<em>防御</em>。\n关键牌在牌堆底。',flavor:'「考试正好考你没复习的那章——纯鬼抽。」',severity:'funny',kw:['运气差','倒霉','水逆','不幸','没抽到','手气差','点背','心态崩','呼噜','没睡好']},
-    {name:'耗尽',cost:'2',cost_color:'blue',card_type:'技能',rarity:'uncommon',character:'defect',effect:'获得 <em>3 点集中</em>。\n消耗一个球位。\n（HP上限永久-1）',flavor:'「熬夜赶完——第二天人废了。」',severity:'savage',kw:['熬夜','通宵','透支','肝','一口气肝','赶完','赶工','刷夜','不睡觉','没睡觉','通宵达旦','爆肝']},
-    {name:'虚无',cost:'1',cost_color:'blue',card_type:'技能',rarity:'uncommon',character:'neutral',effect:'不打就<em>永久消失</em>。',flavor:'「这回合不打就没了。和大多数机会一样。」',severity:'funny',kw:['错过','没了','没选上','选课','抢课','卖完了','没抢到','机会','消失了','下架']},
-    {name:'回响形态',cost:'3',cost_color:'gold',card_type:'能力',rarity:'rare',character:'defect',effect:'第一张牌<em>触发两次</em>。\n群里有人复读了。',flavor:'「回响形态：你发了句话，被复读二十遍。」',severity:'funny',kw:['复读','重复','又','再','还来','抄','复制','又说一遍','又一次','一样','还是','也','继续继续','跟队形']},
-    {name:'自我修复',cost:'1',cost_color:'blue',card_type:'能力',rarity:'uncommon',character:'defect',effect:'战斗结束回复 <em>7 点生命</em>。\n睡一觉就好了。',flavor:'「周六睡到自然醒——自我修复。」',severity:'healing',kw:['睡觉','休息','恢复','躺','周末','放假','睡','回血','补觉','养生','放松','躺平','睡到']},
-    {name:'内核加速',cost:'0',cost_color:'blue',card_type:'技能',rarity:'uncommon',character:'defect',effect:'获得 <em>2 点能量</em>。抽牌。\n塞一张<em>虚空</em>（咖啡因崩溃）。',flavor:'「喝完咖啡以为自己是观者——一小时后变鸡煲。」',severity:'funny',kw:['咖啡','红牛','提神','能量','加速','猛冲','冲了','加油','干','肾上腺素']},
-    {name:'重启',cost:'0',cost_color:'blue',card_type:'技能',rarity:'uncommon',character:'defect',effect:'洗牌重抽。\n代码删了重写。实验重做。',flavor:'「重启一时爽——三次后还是一样。」',severity:'funny',kw:['重来','重做','删','删除','重新','再来','推倒','重置','清除','重写','推翻']},
-    {name:'循环',cost:'1',cost_color:'blue',card_type:'能力',rarity:'uncommon',character:'defect',effect:'触发最右球。\ndebug→改→又出bug→…',flavor:'「你在循环里。好消息是知道怎么走。坏消息是走不出来。」',severity:'funny',kw:['循环','转圈','debug','改','又出bug','陷入','走不出来','反反复复']},
-    {name:'裂变',cost:'1',cost_color:'gold',card_type:'技能',rarity:'rare',character:'defect',effect:'移除所有球，每移除1个<em>+1能量</em>。\n五份作业同时赶。',flavor:'「每个窗口都在燃烧——裂变的艺术。」',severity:'funny',kw:['多线程','多任务','同时','好几件事','兼顾','切换','分身','并行','五个','多个']},
-    {name:'创造性AI',cost:'3',cost_color:'gold',card_type:'能力',rarity:'rare',character:'defect',effect:'每回合生成一张<em>能力牌</em>。\n灵感源源不断。',flavor:'「AI出奇迹！塞的全是3费废牌——血压拉满。」',severity:'funny',kw:['灵感','想法','创意','点子','brainstorm','头脑风暴','冒出来','灵光一闪','创造','沉浸','心流','忘了吃饭']},
-    {name:'碎片整理',cost:'1',cost_color:'blue',card_type:'能力',rarity:'uncommon',character:'defect',effect:'+2 集中。桌面整洁。',flavor:'「收拾完房间人生都美好了——维持半天。」',severity:'positive',kw:['收拾','整理','打扫','清洁','归纳','笔记整理','清理','清理桌面']},
-    {name:'硬化',cost:'1',cost_color:'blue',card_type:'技能',rarity:'uncommon',character:'defect',effect:'消耗一张牌，+16 格挡。\n被骂一次，脸皮厚一层。',flavor:'「被导师骂完——硬化了。」',severity:'positive',kw:['被骂','批评','打击','挫折','失败','被拒','被怼','受苦','教训','变强','克服']},
-    {name:'搜寻',cost:'0',cost_color:'gold',card_type:'技能',rarity:'rare',character:'defect',effect:'从牌堆<em>任选一张</em>。',flavor:'「翻相册三分钟找到表情包——搜寻。」',severity:'positive',kw:['找','搜索','查找','在哪','找东西','找不到','搜一下']},
-    {name:'混沌',cost:'2',cost_color:'blue',card_type:'技能',rarity:'uncommon',character:'defect',effect:'随机填 <em>2 个球位</em>。\n不知道会填什么。',flavor:'「教务系统抢课崩了——混沌。」',severity:'funny',kw:['乱','一团糟','搞砸','紊乱','系统崩','服务器崩','抢课崩','卡了','崩溃了','混乱','乱套','崩了']},
-    {name:'机器学习',cost:'1',cost_color:'blue',card_type:'能力',rarity:'uncommon',character:'defect',effect:'每回合多抽<em>1 张牌</em>。\n每天背单词。',flavor:'「背单词是纯机器学习——一年后还在用abandon。」',severity:'positive',kw:['背单词','每天','学习','积累','慢慢','坚持','打卡','学英语','单词']},
-    {name:'伤口',cost:'∞',cost_color:'red',card_type:'状态',rarity:'curse',character:'neutral',effect:'不可打出。纯占卡位。\n那门水课。',flavor:'「有些课就像伤口：不可打出，纯占卡位。」',severity:'savage',kw:['没用','废','没价值','水课','水','垃圾','废物','浪费','无聊','毫无意义','划水']},
-    {name:'第四强角色',cost:'0',cost_color:'red',card_type:'状态',rarity:'basic',character:'defect',effect:'尖塔<em>第四强</em>。\n一共四个角色。',flavor:'「鸡煲是第四强的角色——一共四个。」',severity:'savage',kw:['菜','弱','废物','不行','最差','垫底','菜鸡','倒数','末位','第四','好弱','太菜']},
-  ];
-  const scored=db.map(c=>{let s=0;c.kw.forEach(k=>{if(lower.includes(k))s+=k.length;});return{card:c,score:s};});
-  scored.sort((a,b)=>b.score-a.score);
-  const top=scored.filter(s=>s.score>0).slice(0,3).map(s=>s.card);
-  return top.length?top:[db[0]];
-}
-
-// ============ 工具 ============
-function fill(t){document.getElementById('textInput').value=t;}
-function toast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2200);}
-function loader(show,msg){document.getElementById('loader').classList.toggle('show',show);if(msg)document.getElementById('loaderMsg').textContent=msg;}
-
-document.addEventListener('keydown',e=>{if((e.ctrlKey||e.metaKey)&&e.key==='Enter'){e.preventDefault();mode==='ai'?analyzeAI():analyzeLocal();}});
+document.addEventListener('keydown',e=>{if((e.ctrlKey||e.metaKey)&&e.key==='Enter'){e.preventDefault();go()}});
 </script>
 </body>
 </html>
