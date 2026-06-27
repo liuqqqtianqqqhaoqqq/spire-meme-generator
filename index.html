@@ -461,9 +461,14 @@ async function analyzeAI(){
 
   try{
     const msgs=[{role:'system',content:AI_SP}];
-    const userContent=[{type:'text',text:text||'分析图片'}];
-    if(imgB64){userContent.unshift({type:'image_url',image_url:{url:`data:image/png;base64,${imgB64}`}});}
-    msgs.push({role:'user',content:userContent});
+    if(imgB64){
+      msgs.push({role:'user',content:[
+        {type:'image_url',image_url:{url:`data:image/png;base64,${imgB64}`}},
+        {type:'text',text:text||'分析图片'}
+      ]});
+    }else{
+      msgs.push({role:'user',content:text||'分析图片'});
+    }
 
     const resp=await fetch('https://api-slb.packyapi.com/v1/chat/completions',{
       method:'POST',
