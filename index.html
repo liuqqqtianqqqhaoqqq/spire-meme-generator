@@ -179,14 +179,19 @@ function render(data,text){
   const cards=data.cards||[];
   let h='';
 
-  // 卡牌
-  if(cards.length){
-    h+='<div style="font-size:12px;color:var(--gold-dim);margin-bottom:6px;text-align:center">🃏 卡牌匹配</div>';
-    cards.forEach(c=>{
+  // 匹配结果（卡牌/怪物/状态/遗物）
+  const matches=data.matches||data.cards||[];
+  if(matches.length){
+    const typeEmoji={card:'🃏',monster:'👾',boss:'👹',status:'📛',relic:'💎',curse:'🔴'};
+    const typeLabel={card:'卡牌',monster:'怪物',boss:'Boss',status:'状态',relic:'遗物',curse:'诅咒'};
+    h+='<div style="font-size:12px;color:var(--gold-dim);margin-bottom:6px;text-align:center">🎯 梗匹配</div>';
+    matches.forEach(m=>{
+      const t=m.type||'card';
+      const emoji=typeEmoji[t]||'🃏';
+      const label=typeLabel[t]||'卡牌';
       h+=`<div class="r-card">
-        <div class="r-top"><div class="r-cost">${c.cost||'🃏'}</div><div><div class="r-name">${c.name||'?'}</div><div class="r-type">${c.character||'鸡煲'}</div></div></div>
-        <div class="r-body">${(c.why||c.effect||'').replace(/\n/g,'<br>')}</div>
-        ${c.flavor?`<div class="r-flavor">${c.flavor}</div>`:''}
+        <div class="r-top"><div style="font-size:24px">${emoji}</div><div><div class="r-name">${m.name||'?'}</div><div class="r-type">${label}${m.character?' · '+m.character:''}</div></div></div>
+        <div class="r-body">${(m.why||m.effect||'').replace(/\n/g,'<br>')}</div>
       </div>`;
     });
   }
