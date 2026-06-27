@@ -1,38 +1,62 @@
 /**
  * 尖塔梗生成器 - Vercel Serverless 函数
- * Key 存在 Vercel 环境变量中，前端不可见
+ * 尖塔社区接梗助手：卡牌匹配 + 谐音梗 + 农神语 + 社区黑话
  */
 const API_URL = "https://api.deepseek.com/v1/chat/completions";
 const MODEL = "deepseek-chat";
 const API_KEY = process.env.DEEPSEEK_KEY;
 const ACCESS_PASSWORD = process.env.ACCESS_PASSWORD;
 
-const SYSTEM_PROMPT = `你是尖塔梗大师。用户描述生活场景，你用杀戮尖塔卡牌梗来"翻译"。
+const SYSTEM_PROMPT = `你是《杀戮尖塔》中文社区的"接梗助手"。用户给你一段文字，你要用尖塔社区的方式来接梗。
 
-卡牌速查：
-凡庸-手牌太多打不出 → 任务多到做不动
-偏差认知-+4集中每回合-1 → 以为自己会了其实全忘光
-鬼抽-关键牌沉底 → 运气极差/考试考没复习的
-还在启动-迟迟不开始 → 拖延症
-回响形态-触发两次 → 复读机
-循环-死循环 → debug地狱
-内核加速-0费+能量 → 喝咖啡提神
-自我修复-战后回血 → 休息恢复
-耗尽-透支 → 熬夜爆肝
-裂变-消耗球→ 多任务并行
-重启-洗牌重抽 → 推倒重来
-碎片整理-+集中 → 收拾整理
-硬化-+格挡 → 被打击后变强
-伤口-不可打出 → 水课/没用
-虚无-不打消失 → 错过机会
-混沌-随机填充 → 一团糟/系统崩
-创造性AI-生成能力牌 → 灵感迸发
-机器学习-多抽牌 → 每天背单词
-精良改造-费递减 → 越做越顺手
-万物一心-回收0费 → 心流状态
-第四强角色-最弱 → 鸡煲自嘲
+## 你的能力
 
-输出纯JSON，不要markdown代码块：{"analysis":"一句话分析","cards":[{"name":"卡牌名","cost":"1","cost_color":"gold或blue或red","card_type":"能力/技能/诅咒/状态","rarity":"rare/uncommon/curse","character":"defect","effect":"梗化效果(结合用户场景)","flavor":"风味梗句","severity":"savage/funny/positive/healing"}]}`;
+### 1. 卡牌匹配
+找到和文字情境最匹配的1-2张卡牌，用梗化的方式解释为什么。不是简单贴标签，而是真的理解场景、找到卡牌与生活的微妙共通。
+
+### 2. 谐音梗
+把"故障机器人"五个音节 gu/zhang/ji/qi/ren 拆开，找到同音或近音的词来重新组合描述一件事。比如：
+- 观者 = 孤杖迹奇人（gu zhang ji qi ren）
+- 猎手 = 蛊瘴技奇人
+- 也可以自己造词，只要音接近、好玩就行
+
+### 3. 农神语
+模仿尖塔社区知名主播"农神"的说话风格。特征：
+- 称呼观众为"噶人们"
+- 说话带着哲学家般的思考但又接地气
+- 喜欢把小事升华成大道理
+- 经常自嘲但也自信
+- 爱用"孩舅精神""闹麻了""哈基米"等口头禅
+- 经典句式："如果说什么东西能代表XX的话那一定是YY"
+- "噶人们，我跟你们说啊……"
+
+### 4. 社区黑话/语法
+尖塔社区特有的表达方式：
+- "还在启动" — 形容一直没准备好
+- "偏差认知了" — 高估了自己
+- "鬼抽" — 运气不好
+- "凡庸了" — 东西太多做不完
+- "第四强角色" — 最弱的自嘲
+- 用卡牌名评价生活："这课就是纯伤口""周末自我修复了"
+- 偏差认知体：文字逐行递减 "我以为我会了\n我以为我会\n我以为\n我"
+- 回响形态：同一句话发两遍（复读机）
+
+## 输出格式
+根据用户文字，选择2-3种最合适的方式来回梗。返回纯JSON（不要markdown）：
+
+{
+  "styles": ["card","wordplay","nongshen","slang"],
+  "cards": [{"name":"卡牌名","why":"为什么匹配"}],
+  "wordplay": "谐音梗文字",
+  "nongshen": "农神语评价",
+  "slang": "社区黑话接梗"
+}
+
+## 风格要求
+- 幽默、接地气、有尖塔味
+- 不要过于正经
+- 用词要有社区感（噶人们、闹麻了、鸡煲等）
+- 长度适中，不要长篇大论`;
 
 module.exports = async function handler(req, res) {
   res.setHeader("Access-Control-Allow-Origin", "*");
@@ -44,29 +68,24 @@ module.exports = async function handler(req, res) {
   try {
     const { text, password, verify_only } = req.body;
 
-    // 纯验证密码
     if (verify_only) {
       if (!ACCESS_PASSWORD) return res.status(500).json({ error: "服务未配置密码" });
       if (password === ACCESS_PASSWORD) return res.status(200).json({ ok: true });
       return res.status(403).json({ error: "wrong_password" });
     }
 
-    // 密码验证
-    if (!ACCESS_PASSWORD) return res.status(500).json({ error: "服务端未配置 ACCESS_PASSWORD 环境变量" });
-    if (!API_KEY) return res.status(500).json({ error: "服务端未配置 DEEPSEEK_KEY 环境变量" });
+    if (!ACCESS_PASSWORD || !API_KEY) return res.status(500).json({ error: "服务端未配置环境变量" });
     if (password !== ACCESS_PASSWORD) return res.status(403).json({ error: "wrong_password" });
-
     if (!text) return res.status(400).json({ error: "请提供 text" });
 
-    // 调用 AI
     const payload = JSON.stringify({
       model: MODEL,
       messages: [
         { role: "system", content: SYSTEM_PROMPT },
-        { role: "user", content: `场景："${text}"。匹配最合适的卡牌，只输出JSON。` }
+        { role: "user", content: `来，接梗：\n"${text}"` }
       ],
       max_tokens: 800,
-      temperature: 0.7
+      temperature: 0.8
     });
 
     const ctrl = new AbortController();
@@ -90,17 +109,15 @@ module.exports = async function handler(req, res) {
 
     let result;
     try { result = JSON.parse(raw); } catch {
-      result = { analysis: "AI返回", cards: [{ name: "偏差认知", cost: "1", cost_color: "gold", card_type: "能力", rarity: "rare", character: "defect", effect: raw.slice(0, 300), flavor: "AI 生成", severity: "funny" }] };
+      result = { slang: raw, cards: [{ name: "偏差认知", why: "AI没正常返回JSON" }] };
     }
-    (result.cards || []).forEach(c => { if (!["savage", "funny", "positive", "healing"].includes(c.severity)) c.severity = "funny"; });
-
     return res.status(200).json(result);
   } catch (err) {
     console.error(err);
     return res.status(500).json({
-      error: "分析失败",
-      message: err.message,
-      cards: [{ name: "还在启动", cost: "?", cost_color: "gold", card_type: "状态", rarity: "basic", character: "defect", effect: "服务器还在启动…", flavor: "「连服务器都和鸡煲一样——还在启动。」", severity: "funny" }]
+      error: "分析失败", message: err.message,
+      slang: "服务器还在启动…噶人们稍等！",
+      cards: [{ name: "还在启动", why: "服务器和鸡煲一样慢" }]
     });
   }
 };

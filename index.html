@@ -177,17 +177,41 @@ async function go(){
 function render(data,text){
   const p=document.getElementById('result');
   const cards=data.cards||[];
-  const c=cards[0]||{};
-  const sev=c.severity==='savage'?'💀':c.severity==='funny'?'😂':'✨';
+  let h='';
 
-  p.innerHTML=`
-    <div class="r-card">
-      <div class="r-top"><div class="r-cost">${c.cost||1}</div><div><div class="r-name">${c.name||'偏差认知'}</div><div class="r-type">${c.card_type||'能力'} · 鸡煲</div></div><span style="font-size:22px">${sev}</span></div>
-      <div class="r-body">${(c.effect||'').replace(/\n/g,'<br>')}</div>
-      ${c.flavor?`<div class="r-flavor">${c.flavor}</div>`:''}
-    </div>
-    <div style="text-align:center;margin-top:8px;font-size:11px;color:var(--text3)">${data.analysis||''}</div>
-  `;
+  // 卡牌
+  if(cards.length){
+    h+='<div style="font-size:12px;color:var(--gold-dim);margin-bottom:6px;text-align:center">🃏 卡牌匹配</div>';
+    cards.forEach(c=>{
+      h+=`<div class="r-card">
+        <div class="r-top"><div class="r-cost">${c.cost||1}</div><div><div class="r-name">${c.name||'?'}</div><div class="r-type">${c.card_type||'卡牌'} · 鸡煲</div></div></div>
+        <div class="r-body">${(c.why||c.effect||'').replace(/\n/g,'<br>')}</div>
+        ${c.flavor?`<div class="r-flavor">${c.flavor}</div>`:''}
+      </div>`;
+    });
+  }
+
+  // 谐音梗
+  if(data.wordplay){
+    h+=`<div style="font-size:12px;color:var(--gold-dim);margin:12px 0 6px;text-align:center">🎭 谐音梗</div>`;
+    h+=`<div class="r-card"><div class="r-body" style="font-size:16px;text-align:center;color:var(--gold)">${data.wordplay}</div></div>`;
+  }
+
+  // 农神语
+  if(data.nongshen){
+    h+=`<div style="font-size:12px;color:var(--gold-dim);margin:12px 0 6px;text-align:center">🐷 农神语</div>`;
+    h+=`<div class="r-card"><div class="r-top"><div style="font-weight:700;color:var(--gold)">噶人们，我跟你们说啊</div></div><div class="r-body">${data.nongshen.replace(/\n/g,'<br>')}</div></div>`;
+  }
+
+  // 社区黑话
+  if(data.slang){
+    h+=`<div style="font-size:12px;color:var(--gold-dim);margin:12px 0 6px;text-align:center">💬 社区接梗</div>`;
+    h+=`<div class="r-card"><div class="r-body" style="font-size:15px">${data.slang.replace(/\n/g,'<br>')}</div></div>`;
+  }
+
+  if(!h)h=`<div class="r-card"><div class="r-body">${JSON.stringify(data)}</div></div>`;
+
+  p.innerHTML=h;
   p.classList.add('show');
   p.scrollIntoView({behavior:'smooth',block:'nearest'});
 }
