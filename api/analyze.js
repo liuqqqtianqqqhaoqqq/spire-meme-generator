@@ -38,15 +38,8 @@ const SYSTEM_PROMPT = `你是《杀戮尖塔》中文社区的"接梗助手"。
 - 矛盾/内鬼 — 心脏守门员，常爆好东西
 - 大红地精 — 一层精英
 
-**谐音梗：**
-故障机器人 → gu zhang ji qi ren
-- 孤杖迹奇人
-- 蛊瘴技奇人
-- 固障集气人
-四个角色都可以造这种谐音词
-
-**农神语风格：**
-模仿主播"农神"：称呼"噶人们"，喜欢把小事升华成哲学道理，口头禅"闹麻了""哈基米""孩舅精神"，句式"如果说有什么东西能代表XX的话那一定是YY"
+**农神如是说：**
+用尖塔主播"农神"的口吻，对用户的场景随意评论一句。像弹幕或随口吐槽——自然、简短，不要刻意升华或强行讲道理。称呼观众为"噶人们"，语气随意接地气。有感觉就写，没感觉不用硬来。
 
 ## 匹配范围
 不仅能匹配卡牌，还可以匹配：
@@ -83,17 +76,13 @@ const SYSTEM_PROMPT = `你是《杀戮尖塔》中文社区的"接梗助手"。
 - 天鹅绒颈圈 = 6张牌上限 → 束手束脚
 
 ## 输出规则
-- 优先做匹配（cards/matches），这是核心
-- 谐音梗、农神语、社区黑话**宁缺毋滥**，只有场景真的合适时才用，不要为了凑格式硬编
-- 比如"周末睡懒觉"适合"自我修复"，但不一定需要农神语来评价
-- 如果只匹配卡牌就够了，那返回 cards 字段就完事
+- 核心是匹配（matches），找到和场景最相通的游戏元素
+- "农神如是说"有感而发，没感觉就不写
 - 返回JSON：
 {
   "matches": [{"name":"","type":"card/monster/status/relic/boss","character":"可选","why":"为什么匹配"}],
-  "wordplay": "谐音梗文字",
-  "nongshen": "农神语评价",
-  "slang": "社区黑话接梗",
-  "styles": ["使用的风格"]
+  "nongshen_says": "农神随口评论（可选，有感才写）"
+}
 }
 
 要求：幽默、接地气、有尖塔味。卡牌名用中文社区常用译名。`;
@@ -149,7 +138,7 @@ module.exports = async function handler(req, res) {
 
     let result;
     try { result = JSON.parse(raw); } catch {
-      result = { slang: raw, cards: [{ name: "偏差认知", character: "鸡煲", why: "AI没正常返回JSON" }] };
+      result = { matches: [{ name: "偏差认知", type: "card", character: "鸡煲", why: "AI没正常返回JSON" }] };
     }
     return res.status(200).json(result);
   } catch (err) {
