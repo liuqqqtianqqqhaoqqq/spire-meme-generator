@@ -446,60 +446,48 @@ function handleImage(e){
   r.readAsDataURL(f);
 }
 
-// ============ AI 分析 ============
+// ============ 系统提示词（浏览器端AI用） ============
+const AI_SP = `你是尖塔梗翻译官。用户描述场景，你用杀戮尖塔卡牌来"翻译"它。卡牌：凡庸(任务太多) 偏差认知(以为会了其实不会) 鬼抽(运气差) 还在启动(拖延) 回响形态(复读) 循环(死循环) 内核加速(咖啡提神) 自我修复(休息) 耗尽(熬夜) 裂变(多任务) 重启(重来) 碎片整理(收拾) 硬化(变强) 搜寻(找东西) 伤口(水课) 虚无(错过) 混沌(崩了) 创造性AI(灵感) 机器学习(积累) 精良改造(顺手) 万物一心(心流) 第四强角色(鸡煲最弱)。返回纯JSON:{"analysis":"分析","cards":[{"name":"卡牌名","cost":"1","cost_color":"gold/blue/red","card_type":"能力","rarity":"rare/uncommon/curse","character":"defect","effect":"效果结合场景","flavor":"风味梗句","severity":"savage/funny/positive/healing"}]}`;
+
+// ============ AI 分析：浏览器直连 packyapi ============
 async function analyzeAI(){
   const text=document.getElementById('textInput').value.trim();
   if(!text&&!imgB64){toast('请输入文字或上传图片');return;}
+  if(!userKey){toast('请先在 🔒 里保存 API Key');openSettings();return;}
 
-  loader(true,'正在分析……');
+  loader(true,'AI 分析中……');
   document.getElementById('results').classList.remove('show');
   document.getElementById('btnAI').disabled=true;
 
-  // ── 方式1：自有Key → 浏览器直接调API（绕过Vercel限制） ──
-  if(userKey && !aiUnlocked){
-    try{
-      const msgs=[{role:'user',content:text||'分析图片'}];
-      if(imgB64){msgs[0].content=[{type:'text',text:text||'分析这张图片'},{type:'image_url',image_url:{url:`data:image/png;base64,${imgB64}`}}];}
-      const resp=await fetch('https://api-slb.packyapi.com/v1/chat/completions',{
-        method:'POST',
-        headers:{'Content-Type':'application/json','Authorization':'Bearer '+userKey},
-        body:JSON.stringify({model:'gpt-5.5',messages:msgs,max_tokens:800,temperature:0.8})
-      });
-      if(resp.ok){
-        const data=await resp.json();
-        const raw=data.choices[0].message.content;
-        // 简单解析卡牌名
-        const nameMatch=raw.match(/凡庸|偏差认知|鬼抽|还在启动|回响形态|循环|裂变|耗尽|内核加速|自我修复|重启|碎片整理|硬化|搜寻|混沌|机器学习|伤口|创造性AI|精良改造|万物一心|第四强|虚无/);
-        const name=nameMatch?nameMatch[0]:'偏差认知';
-        loader(false);
-        render({analysis:'AI 分析（浏览器直连）',cards:[{name,cost:'1',cost_color:'gold',card_type:'AI生成',rarity:'rare',character:'defect',effect:raw.slice(0,300),flavor:'「浏览器直连 AI 生成」',severity:'funny'}]},text);
-        document.getElementById('btnAI').disabled=false;
-        return;
-      }
-    }catch(e){console.log('浏览器直连失败，回退服务器:',e.message);}
-  }
-
-  // ── 方式2：密码解锁 → 服务器代理 ──
   try{
-    const apiUrl=window.location.hostname==='localhost'?'http://localhost:8765/api/analyze':'https://spire-meme-generator-production.up.railway.app/api/analyze';
-    const body={text:text||undefined};
-    if(imgB64)body.image=imgB64;
-    if(aiUnlocked)body.password=unlockPwd;
-    if(userKey)body.api_key=userKey;
+    const msgs=[{role:'system',content:AI_SP}];
+    const userContent=[{type:'text',text:text||'分析图片'}];
+    if(imgB64){userContent.unshift({type:'image_url',image_url:{url:`data:image/png;base64,${imgB64}`}});}
+    msgs.push({role:'user',content:userContent});
 
-    const resp=await fetch(apiUrl,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
-    if(!resp.ok){
-      const err=await resp.json().catch(()=>({}));
-      if(err.error==='未解锁'||err.message?.includes('未解锁')){toast('请先解锁 AI 模式');openSettings();return;}
-      throw new Error(err.message||'服务器错误');
-    }
+    const resp=await fetch('https://api-slb.packyapi.com/v1/chat/completions',{
+      method:'POST',
+      headers:{'Content-Type':'application/json','Authorization':'Bearer '+userKey},
+      body:JSON.stringify({model:'gpt-5.5',messages:msgs,max_tokens:800,temperature:0.7})
+    });
+
+    if(!resp.ok){throw new Error('API 返回 '+resp.status);}
+
     const data=await resp.json();
+    let raw=data.choices[0].message.content.trim();
+    if(raw.startsWith('```'))raw=raw.replace(/```json\n?|```/g,'').trim();
+
+    let result;
+    try{result=JSON.parse(raw);}
+    catch{result={analysis:'AI生成',cards:[{name:'偏差认知',cost:'1',cost_color:'gold',card_type:'能力',rarity:'rare',character:'defect',effect:raw.slice(0,300),flavor:'「AI 生成」',severity:'funny'}]};}
+
+    (result.cards||[]).forEach(c=>{if(!['savage','funny','positive','healing'].includes(c.severity))c.severity='funny';});
     loader(false);
-    render(data,text||'图片分析');
+    render(result,text||'图片分析');
   }catch(err){
     console.error(err);
     loader(false);
-    toast('AI 不可用，已切换闪电模式');
+    toast('AI 调用失败，切换闪电模式');
     analyzeLocal();
   }finally{
     document.getElementById('btnAI').disabled=false;
