@@ -1,14 +1,13 @@
 """
 尖塔梗生成器 - 后端服务器 (Railway)
 """
-from http.server import HTTPServer, BaseHTTPRequestHandler
-import json, os, ssl, urllib.request
+import http.server, json, os, ssl, urllib.request, sys
 
 API_URL = "https://api-slb.packyapi.com/v1/chat/completions"
 MODEL = "gpt-5.5"
 API_KEY = os.environ.get("GPT_API_KEY", "")
 ACCESS_PASSWORD = os.environ.get("ACCESS_PASSWORD", "")
-PORT = int(os.environ.get("PORT", 8765))
+PORT = int(os.environ.get("PORT", "8765"))
 
 SP = """你是尖塔梗翻译官。用户描述场景，用杀戮尖塔卡牌来"翻译"。
 卡牌：凡庸(任务太多) 偏差认知(以为会了其实不会) 鬼抽(运气差) 还在启动(拖延) 回响形态(复读) 循环(死循环) 内核加速(咖啡提神) 自我修复(休息) 耗尽(熬夜) 裂变(多任务) 重启(重来) 碎片整理(收拾) 硬化(变强) 搜寻(找东西) 伤口(水课) 虚无(错过) 混沌(崩了) 创造性AI(灵感) 机器学习(积累) 精良改造(顺手) 万物一心(心流) 第四强(鸡煲最弱)
@@ -21,7 +20,7 @@ def call_api(msgs, k, mt=600):
     r.add_header("Content-Type","application/json")
     return json.loads(urllib.request.urlopen(r,timeout=25,context=ssl.create_default_context()).read())
 
-class H(BaseHTTPRequestHandler):
+class H(http.server.BaseHTTPRequestHandler):
     def _cors(self):
         self.send_header("Access-Control-Allow-Origin","*")
         self.send_header("Access-Control-Allow-Methods","GET,POST,OPTIONS")
@@ -40,8 +39,7 @@ class H(BaseHTTPRequestHandler):
     def do_OPTIONS(self):self._ok()
     def do_GET(self):
         if self.path=="/api/ping":self._json({"ok":True})
-        elif self.path=="/":self._ok("OK")
-        else:self._json({"error":"not found"},404)
+        else:self._ok("OK")
     def do_POST(self):
         if self.path!="/api/analyze":return self._json({"error":"not found"},404)
         try:
@@ -68,9 +66,11 @@ class H(BaseHTTPRequestHandler):
                 if c.get("severity") not in("savage","funny","positive","healing"):c["severity"]="funny"
             self._json(result)
         except Exception as e:
-            print("ERR:",e)
+            print("ERR:",e,file=sys.stderr)
             self._json({"cards":[{"name":"还在启动","cost":"?","cost_color":"gold","card_type":"状态","rarity":"basic","character":"defect","effect":"服务器还在启动…","flavor":"「连服务器都和鸡煲一样——还在启动。」","severity":"funny"}]},500)
 
 if __name__=="__main__":
-    print(f"Server on port {PORT}")
-    HTTPServer(("0.0.0.0",PORT),H).serve_forever()
+    print(f"Server on 0.0.0.0:{PORT}",flush=True)
+    srv = http.server.ThreadingHTTPServer(("0.0.0.0",PORT), H)
+    srv.daemon_threads = True
+    srv.serve_forever()
