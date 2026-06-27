@@ -54,8 +54,12 @@ class H(BaseHTTPRequestHandler):
             if ak and ak.startswith("sk-"):key=ak
             if not key:return self._json({"error":"未解锁"},403)
             if not t and not b.get("image"):return self._json({"error":"需要输入"},400)
-            ms=[{"role":"system","content":SP},{"role":"user","content":f'场景:"{t}"。匹配卡牌，输出JSON。'}]
-            if b.get("image"):ms[1]["content"]=[{"type":"text","text":f'图片场景:"{t}"'},{"type":"image_url","image_url":{"url":f"data:image/png;base64,{b[\"image\"]}"}}]
+            user_msg = f'场景:"{t}"。匹配卡牌，输出JSON。'
+            ms=[{"role":"system","content":SP},{"role":"user","content":user_msg}]
+            img = b.get("image")
+            if img:
+                img_url = "data:image/png;base64," + img
+                ms[1]["content"]=[{"type":"text","text":user_msg},{"type":"image_url","image_url":{"url":img_url}}]
             r=call_api(ms,key)
             raw=r["choices"][0]["message"]["content"].strip()
             if raw.startswith("```"):raw=raw.replace("```json\n","").replace("```","").strip()
