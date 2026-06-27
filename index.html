@@ -93,8 +93,8 @@ textarea::placeholder{color:var(--text3)}
 <div class="toast" id="toast"></div>
 
 <script>
-const API_URL='https://api-slb.packyapi.com/v1/chat/completions';
-const MODEL='deepseek-v4-flash';
+const API_URL='https://api.deepseek.com/v1/chat/completions';
+const MODEL='deepseek-chat';
 
 const SP=`你是尖塔梗大师。用户描述生活场景，你用杀戮尖塔卡牌梗来"翻译"。
 
@@ -159,7 +159,7 @@ async function go(){
     const resp=await fetch(API_URL,{
       method:'POST',
       headers:{'Content-Type':'application/json','Authorization':'Bearer '+savedKey},
-      body:JSON.stringify({model:MODEL,messages:[{role:'system',content:SP},{role:'user',content:'场景："'+text+'"。匹配最合适的卡牌，只输出JSON，不要markdown代码块。'}],max_tokens:2000,temperature:0.7})
+      body:JSON.stringify({model:MODEL,messages:[{role:'system',content:SP},{role:'user',content:'场景："'+text+'"。匹配最合适的卡牌，只输出JSON，不要markdown代码块。'}],max_tokens:800,temperature:0.7})
     });
     if(!resp.ok){throw new Error('API '+resp.status)}
     const data=await resp.json();
