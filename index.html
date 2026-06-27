@@ -159,12 +159,18 @@ async function go(){
   document.getElementById('btnGo').disabled=true;
 
   try{
+    const authHeader='Bearer '+savedKey;
+    console.log('Using key (first 10):',savedKey.slice(0,10));
     const resp=await fetch(API_URL,{
       method:'POST',
-      headers:{'Content-Type':'application/json','Authorization':'Bearer '+savedKey},
+      headers:{'Content-Type':'application/json','Authorization':authHeader},
       body:JSON.stringify({model:MODEL,messages:[{role:'system',content:SP},{role:'user',content:'场景："'+text+'"。匹配最合适的卡牌，只输出JSON，不要markdown代码块。'}],max_tokens:800,temperature:0.7})
     });
-    if(!resp.ok){throw new Error('API '+resp.status)}
+    if(!resp.ok){
+      const errText=await resp.text().catch(()=>'');
+      console.error('API Error:',resp.status,errText);
+      throw new Error('API '+resp.status+': '+errText.slice(0,50));
+    }
     const data=await resp.json();
     let msg=data.choices[0].message;
     let raw=(msg.content||msg.reasoning_content||'').trim();
