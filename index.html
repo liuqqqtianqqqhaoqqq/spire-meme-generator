@@ -485,9 +485,9 @@ async function analyzeAI(){
     loader(false);
     render(result,text||'图片分析');
   }catch(err){
-    console.error(err);
+    console.error('AI Error:', err.message, err);
     loader(false);
-    toast('AI 调用失败，切换闪电模式');
+    toast('AI 调用失败: ' + (err.message||'未知错误').slice(0,30));
     analyzeLocal();
   }finally{
     document.getElementById('btnAI').disabled=false;
