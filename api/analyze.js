@@ -1,38 +1,38 @@
 /**
- * 尖塔梗生成器 - Vercel Serverless Function
+ * 尖塔梗生成器 - Vercel Serverless 函数
+ * Key 存在 Vercel 环境变量中，前端不可见
  */
-const API_URL = "https://api-slb.packyapi.com/v1/chat/completions";
-const MODEL = "gpt-5.5";
-const API_KEY = process.env.GPT_API_KEY;
+const API_URL = "https://api.deepseek.com/v1/chat/completions";
+const MODEL = "deepseek-chat";
+const API_KEY = process.env.DEEPSEEK_KEY;
+const ACCESS_PASSWORD = process.env.ACCESS_PASSWORD;
 
-const SYSTEM_PROMPT = `你是尖塔梗翻译官。用户描述生活场景，你用杀戮尖塔卡牌来"翻译"它。
+const SYSTEM_PROMPT = `你是尖塔梗大师。用户描述生活场景，你用杀戮尖塔卡牌梗来"翻译"。
 
-相关卡牌梗：
-【凡庸】手牌太多打不出来 → 任务多到做不动
-【偏差认知】+4集中每回合-1 → 以为自己会了其实不会
-【鬼抽】关键牌沉底 → 运气差/考试正好考没复习的
-【还在启动】永远在准备 → 拖延症
-【回响形态】重复触发 → 复读机
-【循环】→ 死循环/debug地狱
-【内核加速】0费+能量 → 喝咖啡提神
-【自我修复】战后回血 → 休息恢复
-【耗尽】+集中但减球位 → 熬夜透支
-【裂变】→ 多任务并行
-【重启】→ 推倒重来
-【碎片整理】→ 收拾整理
-【硬化】→ 被打击后变强
-【搜寻】→ 精准找东西
-【伤口】→ 没用的水课
-【虚无】→ 错过机会
-【混沌】→ 一团糟
-【创造性AI】→ 灵感迸发
-【机器学习】→ 每天积累
-【精良改造】→ 越做越顺手
-【万物一心】→ 心流状态
-【第四强角色】→ 鸡煲自嘲
+卡牌速查：
+凡庸-手牌太多打不出 → 任务多到做不动
+偏差认知-+4集中每回合-1 → 以为自己会了其实全忘光
+鬼抽-关键牌沉底 → 运气极差/考试考没复习的
+还在启动-迟迟不开始 → 拖延症
+回响形态-触发两次 → 复读机
+循环-死循环 → debug地狱
+内核加速-0费+能量 → 喝咖啡提神
+自我修复-战后回血 → 休息恢复
+耗尽-透支 → 熬夜爆肝
+裂变-消耗球→ 多任务并行
+重启-洗牌重抽 → 推倒重来
+碎片整理-+集中 → 收拾整理
+硬化-+格挡 → 被打击后变强
+伤口-不可打出 → 水课/没用
+虚无-不打消失 → 错过机会
+混沌-随机填充 → 一团糟/系统崩
+创造性AI-生成能力牌 → 灵感迸发
+机器学习-多抽牌 → 每天背单词
+精良改造-费递减 → 越做越顺手
+万物一心-回收0费 → 心流状态
+第四强角色-最弱 → 鸡煲自嘲
 
-输出纯JSON：
-{"analysis":"一句话","cards":[{"name":"卡牌名","cost":"费用","cost_color":"gold/blue/red","card_type":"类型","rarity":"rare/uncommon/curse","character":"defect","effect":"梗化效果","flavor":"风味文字","severity":"savage/funny/positive/healing"}]}`;
+输出纯JSON，不要markdown代码块：{"analysis":"一句话分析","cards":[{"name":"卡牌名","cost":"1","cost_color":"gold或blue或red","card_type":"能力/技能/诅咒/状态","rarity":"rare/uncommon/curse","character":"defect","effect":"梗化效果(结合用户场景)","flavor":"风味梗句","severity":"savage/funny/positive/healing"}]}`;
 
 module.exports = async function handler(req, res) {
   res.setHeader("Access-Control-Allow-Origin", "*");
@@ -42,67 +42,65 @@ module.exports = async function handler(req, res) {
   if (req.method !== "POST") return res.status(405).json({ error: "只支持 POST" });
 
   try {
-    const { text, image, password, api_key, verify_only } = req.body;
-    const ACCESS_PASSWORD = process.env.ACCESS_PASSWORD;
+    const { text, password, verify_only } = req.body;
 
-    // 验证密码
+    // 纯验证密码
     if (verify_only) {
-      if (ACCESS_PASSWORD && password === ACCESS_PASSWORD) return res.status(200).json({ ok: true });
+      if (!ACCESS_PASSWORD) return res.status(500).json({ error: "服务未配置密码" });
+      if (password === ACCESS_PASSWORD) return res.status(200).json({ ok: true });
       return res.status(403).json({ error: "wrong_password" });
     }
 
-    // 确定 Key
-    let activeKey = null;
-    if (ACCESS_PASSWORD && password === ACCESS_PASSWORD) activeKey = API_KEY;
-    if (api_key && api_key.startsWith("sk-")) activeKey = api_key;
-    if (!activeKey) return res.status(403).json({ error: "未解锁", message: "请通过密码解锁或提供自有 API Key" });
-    if (!text && !image) return res.status(400).json({ error: "请提供 text 或 image" });
+    // 密码验证
+    if (!ACCESS_PASSWORD) return res.status(500).json({ error: "服务端未配置 ACCESS_PASSWORD 环境变量" });
+    if (!API_KEY) return res.status(500).json({ error: "服务端未配置 DEEPSEEK_KEY 环境变量" });
+    if (password !== ACCESS_PASSWORD) return res.status(403).json({ error: "wrong_password" });
 
-    // 构建消息
-    const messages = [{ role: "system", content: SYSTEM_PROMPT }];
-    const userContent = [{ type: "text", text: `场景："${text||'图片内容'}"。匹配最合适的卡牌，只输出JSON。` }];
-    if (image) {
-      userContent.unshift({ type: "image_url", image_url: { url: `data:image/png;base64,${image}` } });
-      userContent[userContent.length-1].text = text ? `图片+文字："${text}"` : "分析这张图片";
-    }
-    messages.push({ role: "user", content: userContent });
+    if (!text) return res.status(400).json({ error: "请提供 text" });
 
     // 调用 AI
-    const payload = JSON.stringify({ model: MODEL, messages, max_tokens: 600, temperature: 0.8 });
+    const payload = JSON.stringify({
+      model: MODEL,
+      messages: [
+        { role: "system", content: SYSTEM_PROMPT },
+        { role: "user", content: `场景："${text}"。匹配最合适的卡牌，只输出JSON。` }
+      ],
+      max_tokens: 800,
+      temperature: 0.7
+    });
+
     const ctrl = new AbortController();
-    const t = setTimeout(() => ctrl.abort(), 25000);
+    const timeout = setTimeout(() => ctrl.abort(), 20000);
     const resp = await fetch(API_URL, {
       method: "POST",
-      headers: { "Authorization": `Bearer ${activeKey}`, "Content-Type": "application/json" },
+      headers: { "Authorization": `Bearer ${API_KEY}`, "Content-Type": "application/json" },
       body: payload,
       signal: ctrl.signal
     });
-    clearTimeout(t);
+    clearTimeout(timeout);
 
     if (!resp.ok) {
       const errText = await resp.text().catch(() => "");
-      throw new Error(`AI API ${resp.status}: ${errText.slice(0, 200)}`);
+      throw new Error(`DeepSeek ${resp.status}: ${errText.slice(0, 200)}`);
     }
 
     const data = await resp.json();
+    let raw = data.choices[0].message.content.trim();
+    if (raw.startsWith("```")) raw = raw.replace(/```json\n?|```/g, "").trim();
+
     let result;
-    try {
-      let raw = data.choices[0].message.content.trim();
-      if (raw.startsWith("```")) raw = raw.replace(/```json\n?|```/g, "").trim();
-      result = JSON.parse(raw);
-      (result.cards || []).forEach(c => {
-        if (!["savage","funny","positive","healing"].includes(c.severity)) c.severity = "funny";
-        if (c.effect) c.effect = c.effect.replace(/\\n/g, "\n");
-      });
-    } catch {
-      result = { analysis: "AI返回了奇怪的东西", cards: [{ name: "偏差认知", cost: "1", cost_color: "gold", card_type: "能力", rarity: "rare", character: "defect", effect: "AI 没返回正确的 JSON…\n这本身就是一种偏差认知。", flavor: "「偏差认知：连AI都在玩你的梗。」", severity: "savage" }] };
+    try { result = JSON.parse(raw); } catch {
+      result = { analysis: "AI返回", cards: [{ name: "偏差认知", cost: "1", cost_color: "gold", card_type: "能力", rarity: "rare", character: "defect", effect: raw.slice(0, 300), flavor: "AI 生成", severity: "funny" }] };
     }
+    (result.cards || []).forEach(c => { if (!["savage", "funny", "positive", "healing"].includes(c.severity)) c.severity = "funny"; });
+
     return res.status(200).json(result);
   } catch (err) {
     console.error(err);
     return res.status(500).json({
-      error: "分析失败", message: err.message,
-      cards: [{ name: "还在启动", cost: "?", cost_color: "gold", card_type: "状态", rarity: "basic", character: "defect", effect: "服务器还在启动…\n请稍后再试。", flavor: "「连服务器都和鸡煲一样——还在启动。」", severity: "funny" }]
+      error: "分析失败",
+      message: err.message,
+      cards: [{ name: "还在启动", cost: "?", cost_color: "gold", card_type: "状态", rarity: "basic", character: "defect", effect: "服务器还在启动…", flavor: "「连服务器都和鸡煲一样——还在启动。」", severity: "funny" }]
     });
   }
 };

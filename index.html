@@ -76,10 +76,11 @@ textarea::placeholder{color:var(--text3)}
       <input type="password" id="pwdInput" placeholder="输入访问密码" autocomplete="off">
       <button class="btn btn-ghost" onclick="unlockPwd()" style="flex-shrink:0;padding:8px 16px;font-size:13px">解锁</button>
     </div>
-    <div class="key-row" id="keyRow">
-      <input type="password" id="keyInput" placeholder="或填入自己的 API Key（只存浏览器）" autocomplete="off">
-      <span class="hint" id="keyHint">🔒 未保存</span>
+    <div class="key-row" id="keyRow" style="display:none">
+      <span style="color:#609060;font-size:12px">🔓 已解锁 — API Key 受服务器保护</span>
+      <button class="btn btn-ghost" onclick="clearPwd()" style="padding:4px 12px;font-size:11px;color:var(--red)">锁定</button>
     </div>
+    <span class="badge" id="unlockBadge" style="display:none;float:right;font-size:10px;padding:2px 8px;border-radius:8px;background:rgba(64,200,96,0.1);color:var(--green);margin-top:4px">🔓 已解锁</span>
 
     <div class="btn-row">
       <button class="btn btn-go" id="btnGo" onclick="go()">🤖 生成梗</button>
@@ -97,126 +98,65 @@ textarea::placeholder{color:var(--text3)}
 <div class="toast" id="toast"></div>
 
 <script>
-const API_URL='https://api.deepseek.com/v1/chat/completions';
-const MODEL='deepseek-chat';
-const BUILTIN_KEY='REDACTED';
 const PASSWORD='yit';
 
-const SP=`你是尖塔梗大师。用户描述生活场景，你用杀戮尖塔卡牌梗来"翻译"。
-
-卡牌速查：
-凡庸-手牌太多打不出 → 任务多到做不动
-偏差认知-+4集中每回合-1 → 以为自己会了其实全忘光
-鬼抽-关键牌沉底 → 运气极差/考试考没复习的
-还在启动-迟迟不开始 → 拖延症
-回响形态-触发两次 → 复读机
-循环-死循环 → debug地狱
-内核加速-0费+能量 → 喝咖啡提神
-自我修复-战后回血 → 休息恢复
-耗尽-透支 → 熬夜爆肝
-裂变-消耗球→ 多任务并行
-重启-洗牌重抽 → 推倒重来
-碎片整理-+集中 → 收拾整理
-硬化-+格挡 → 被打击后变强
-伤口-不可打出 → 水课/没用
-虚无-不打消失 → 错过机会
-混沌-随机填充 → 一团糟/系统崩
-创造性AI-生成能力牌 → 灵感迸发
-机器学习-多抽牌 → 每天背单词
-精良改造-费递减 → 越做越顺手
-万物一心-回收0费 → 心流状态
-第四强角色-最弱 → 鸡煲自嘲
-
-输出纯JSON，不要markdown代码块：{"analysis":"一句话分析","cards":[{"name":"卡牌名","cost":"1","cost_color":"gold或blue或red","card_type":"能力/技能/诅咒/状态","rarity":"rare/uncommon/curse","character":"defect","effect":"梗化效果(结合用户场景)","flavor":"风味梗句","severity":"savage/funny/positive/healing"}]}`;
-
-let savedKey='';
 let pwdUnlocked=false;
 
-// 初始化：读localStorage
-try{savedKey=localStorage.getItem('sts_key')||''}catch(e){}
-if(savedKey&&savedKey.includes('***')){savedKey='';localStorage.removeItem('sts_key')}
+// 初始化
 pwdUnlocked=localStorage.getItem('sts_pwd')==='1';
 
-function updateKeyUI(){
-  const inp=document.getElementById('keyInput');
-  const pwd=document.getElementById('pwdInput');
-  const hint=document.getElementById('keyHint');
+function updateUI(){
   if(pwdUnlocked){
-    savedKey=BUILTIN_KEY;
-    pwd.style.display='none';
-    inp.placeholder='✅ 已用密码解锁内置Key';
-    inp.disabled=true;
-    inp.value='✅ 已解锁';
-    hint.textContent='🔓 已解锁';
-    hint.className='key-saved';
     document.getElementById('pwdRow').style.display='none';
-    document.getElementById('keyRow').style.display='flex';
-  }else if(savedKey){
-    inp.value=savedKey.slice(0,8)+'***';
-    hint.textContent='✅ 已保存';
-    hint.className='key-saved';
+    document.getElementById('keyRow').style.display='none';
+    document.getElementById('unlockBadge').style.display='inline';
+  }else{
+    document.getElementById('unlockBadge').style.display='none';
   }
 }
 
-function saveKey(){
-  const inp=document.getElementById('keyInput');
-  const v=inp.value.trim();
-  if(!v||v.includes('***')||v.startsWith('✅'))return;
-  if(!v.startsWith('sk-')){t('Key格式应为sk-开头');return}
-  savedKey=v;
-  pwdUnlocked=false;localStorage.removeItem('sts_pwd');
-  try{localStorage.setItem('sts_key',v)}catch(e){}
-  inp.value=v.slice(0,8)+'***';
-  document.getElementById('keyHint').textContent='✅ 已保存';
-  document.getElementById('keyHint').className='key-saved';
-  t('Key已保存 ✅');
-}
-
-function unlockPwd(){
+async function unlockPwd(){
   const v=document.getElementById('pwdInput').value.trim();
   if(v!==PASSWORD){t('密码错误');return}
-  pwdUnlocked=true;savedKey=BUILTIN_KEY;localStorage.setItem('sts_pwd','1');
-  localStorage.removeItem('sts_key');
-  updateKeyUI();t('✅ 已解锁！');
+  // 向服务器验证密码
+  showLoader(true);
+  try{
+    const apiUrl=window.location.hostname==='localhost'?'http://localhost:8765/api/analyze':'/api/analyze';
+    const resp=await fetch(apiUrl,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({text:'verify',password:v,verify_only:true})});
+    if(resp.ok){
+      pwdUnlocked=true;localStorage.setItem('sts_pwd','1');
+      updateUI();t('✅ 已解锁！');
+    }else{
+      t('密码错误');
+    }
+  }catch(e){t('无法连接服务器');}
+  showLoader(false);
 }
 
-document.getElementById('keyInput').onblur=saveKey;
-document.getElementById('keyInput').oninput=function(){if(this.value.startsWith('sk-')&&this.value.length>10)saveKey()};
+function clearPwd(){
+  pwdUnlocked=false;localStorage.removeItem('sts_pwd');
+  updateUI();t('已锁定');
+}
 
 async function go(){
   const text=document.getElementById('textInput').value.trim();
   if(!text){t('请输入文字');return}
-  if(pwdUnlocked){savedKey=BUILTIN_KEY}
-  else{saveKey()}
-  if(!savedKey){t('请先输入密码解锁或填写API Key');return}
+  if(!pwdUnlocked){t('请先输入密码解锁');return}
 
   showLoader(true);
   document.getElementById('result').classList.remove('show');
   document.getElementById('btnGo').disabled=true;
 
   try{
-    const authHeader='Bearer '+savedKey;
-    console.log('Using key (first 10):',savedKey.slice(0,10));
-    const resp=await fetch(API_URL,{
-      method:'POST',
-      headers:{'Content-Type':'application/json','Authorization':authHeader},
-      body:JSON.stringify({model:MODEL,messages:[{role:'system',content:SP},{role:'user',content:'场景："'+text+'"。匹配最合适的卡牌，只输出JSON，不要markdown代码块。'}],max_tokens:800,temperature:0.7})
-    });
+    const apiUrl=window.location.hostname==='localhost'?'http://localhost:8765/api/analyze':'/api/analyze';
+    const resp=await fetch(apiUrl,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({text,password:PASSWORD})});
     if(!resp.ok){
-      const errText=await resp.text().catch(()=>'');
-      console.error('API Error:',resp.status,errText);
-      throw new Error('API '+resp.status+': '+errText.slice(0,50));
+      const err=await resp.json().catch(()=>({}));
+      throw new Error(err.message||'API '+resp.status);
     }
     const data=await resp.json();
-    let msg=data.choices[0].message;
-    let raw=(msg.content||msg.reasoning_content||'').trim();
-    if(raw.startsWith('```'))raw=raw.replace(/```json\n?|```/g,'').trim();
-
-    let result;
-    try{result=JSON.parse(raw)}catch(e){result={analysis:'AI返回',cards:[{name:'偏差认知',cost:'1',cost_color:'gold',card_type:'能力',rarity:'rare',character:'defect',effect:raw.slice(0,300),flavor:'AI 生成',severity:'funny'}]}}
-
     showLoader(false);
-    render(result,text);
+    render(data,text);
   }catch(err){
     console.error(err);
     showLoader(false);
@@ -247,7 +187,7 @@ function render(data,text){
 function t(msg){const e=document.getElementById('toast');e.textContent=msg;e.classList.add('show');setTimeout(()=>e.classList.remove('show'),2200)}
 function showLoader(s){document.getElementById('loader').classList.toggle('show',s)}
 
-updateKeyUI();
+updateUI();
 document.addEventListener('keydown',e=>{if((e.ctrlKey||e.metaKey)&&e.key==='Enter'){e.preventDefault();go()}});
 </script>
 </body>
