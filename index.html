@@ -1,0 +1,633 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>尖塔梗生成器 | AI驱动 · 你说句话我给你翻译成鸡煲笑话</title>
+<meta name="description" content="输入你的生活场景，AI自动匹配杀戮尖塔卡牌梗。支持文字和图片。鸡煲笑话大全。">
+<meta name="theme-color" content="#0a0a12">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🤖</text></svg>">
+<style>
+:root {
+  --bg: #0a0a12;
+  --card-bg: #131320;
+  --gold: #c8a84e;
+  --gold-dim: #8a7030;
+  --blue: #4a9eff;
+  --red: #e04040;
+  --green: #40c860;
+  --purple: #a040e0;
+  --text: #d0d0d8;
+  --text-dim: #6a6a7a;
+  --border: #2a2a3a;
+  --shadow-gold: 0 0 24px rgba(200,168,78,0.3);
+  --shadow-blue: 0 0 18px rgba(74,158,255,0.3);
+  --shadow-red: 0 0 16px rgba(224,64,64,0.25);
+  --radius: 16px;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{
+  font-family: -apple-system,BlinkMacSystemFont,'Segoe UI','Noto Sans SC',sans-serif;
+  background:var(--bg); color:var(--text); min-height:100vh;
+}
+.bg{position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:0;}
+.bg .orb{
+  position:absolute; border-radius:50%; filter:blur(80px); opacity:0.08;
+  animation:orbFloat 20s ease-in-out infinite;
+}
+.bg .orb:nth-child(1){width:400px;height:400px;background:var(--blue);top:-100px;left:-100px;animation-delay:0s;}
+.bg .orb:nth-child(2){width:300px;height:300px;background:var(--purple);bottom:-80px;right:-80px;animation-delay:-7s;}
+.bg .orb:nth-child(3){width:250px;height:250px;background:var(--gold);top:50%;left:60%;animation-delay:-14s;}
+@keyframes orbFloat{0%,100%{transform:translate(0,0);}33%{transform:translate(40px,-30px);}66%{transform:translate(-30px,20px);}}
+
+.container{position:relative;z-index:1;max-width:700px;margin:0 auto;padding:16px;}
+
+/* Header */
+.header{text-align:center;padding:32px 8px 20px;}
+.header .icon{font-size:48px;margin-bottom:4px;}
+.header h1{
+  font-size:clamp(24px,6vw,36px);font-weight:900;letter-spacing:2px;
+  background:linear-gradient(135deg,var(--blue),var(--purple),var(--gold));
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
+}
+.header .sub{color:var(--text-dim);font-size:13px;margin-top:4px;}
+.header .sub em{color:var(--gold);font-style:normal;font-weight:700;}
+
+/* Mode Tabs */
+.modes{display:flex;justify-content:center;gap:8px;margin-bottom:16px;flex-wrap:wrap;}
+.mode-btn{
+  padding:10px 20px;border-radius:24px;border:1.5px solid var(--border);
+  background:var(--card-bg);color:var(--text-dim);font-size:14px;
+  cursor:pointer;transition:all 0.25s;font-family:inherit;
+  display:flex;align-items:center;gap:6px;
+}
+.mode-btn:hover{border-color:var(--gold-dim);color:var(--text);}
+.mode-btn.active{background:linear-gradient(135deg,#1a1a35,#1a2535);border-color:var(--blue);color:var(--blue);box-shadow:0 0 16px rgba(74,158,255,0.12);}
+.mode-btn .badge{font-size:10px;padding:2px 8px;border-radius:10px;background:rgba(200,168,78,0.15);color:var(--gold);}
+
+/* Input Panel */
+.panel{
+  background:var(--card-bg);border:1px solid var(--border);
+  border-radius:var(--radius);padding:20px;margin-bottom:16px;
+  transition:border 0.3s;
+}
+.panel:focus-within{border-color:var(--gold-dim);box-shadow:var(--shadow-gold);}
+
+/* Text Input */
+textarea{
+  width:100%;min-height:80px;background:#0a0a15;
+  border:1px solid var(--border);border-radius:12px;padding:14px;
+  color:var(--text);font-size:15px;resize:vertical;font-family:inherit;
+  outline:none;transition:border 0.3s;line-height:1.6;
+}
+textarea:focus{border-color:var(--blue);}
+textarea::placeholder{color:var(--text-dim);font-size:14px;}
+.char-count{text-align:right;font-size:12px;color:var(--text-dim);margin-top:6px;}
+
+/* Image Upload */
+.upload-row{display:flex;gap:12px;align-items:center;margin-top:12px;}
+.upload-btn{
+  padding:8px 16px;border-radius:20px;border:1.5px dashed var(--border);
+  background:transparent;color:var(--text-dim);font-size:13px;
+  cursor:pointer;font-family:inherit;transition:all 0.2s;
+  display:flex;align-items:center;gap:6px;
+}
+.upload-btn:hover{border-color:var(--gold-dim);color:var(--gold);}
+.upload-btn.active{border-color:var(--blue);color:var(--blue);border-style:solid;}
+#imageInput{display:none;}
+.img-preview{
+  display:none;align-items:center;gap:8px;margin-top:8px;
+  padding:8px 12px;background:rgba(255,255,255,0.03);border-radius:10px;
+}
+.img-preview.show{display:flex;}
+.img-preview img{width:48px;height:48px;border-radius:8px;object-fit:cover;border:1px solid var(--border);}
+.img-preview .img-name{flex:1;font-size:13px;color:var(--text-dim);overflow:hidden;white-space:nowrap;text-overflow:ellipsis;}
+.img-preview .img-remove{padding:4px 8px;border-radius:12px;border:1px solid var(--red);background:transparent;color:var(--red);font-size:12px;cursor:pointer;}
+
+/* Buttons */
+.btns{display:flex;justify-content:center;gap:10px;margin-top:16px;flex-wrap:wrap;}
+.btn{
+  padding:12px 36px;border-radius:28px;border:none;
+  font-size:15px;font-weight:700;cursor:pointer;font-family:inherit;
+  letter-spacing:1px;transition:all 0.3s;display:flex;align-items:center;gap:6px;
+}
+.btn:active{transform:scale(0.97);}
+.btn-go{
+  background:linear-gradient(135deg,var(--blue),#3060d0);
+  color:#fff;box-shadow:0 4px 16px rgba(74,158,255,0.3);
+}
+.btn-go:hover{transform:translateY(-1px);box-shadow:0 6px 24px rgba(74,158,255,0.4);}
+.btn-go:disabled{opacity:0.5;cursor:not-allowed;transform:none;box-shadow:none;}
+
+.btn-ai{
+  background:linear-gradient(135deg,var(--purple),#7020b0);
+  color:#fff;box-shadow:0 4px 16px rgba(160,64,224,0.3);
+}
+.btn-ai:hover{transform:translateY(-1px);box-shadow:0 6px 24px rgba(160,64,224,0.4);}
+.btn-ai:disabled{opacity:0.5;cursor:not-allowed;transform:none;box-shadow:none;}
+
+.btn-rand{background:transparent;border:1.5px solid var(--gold-dim);color:var(--gold);padding:12px 24px;}
+.btn-rand:hover{background:rgba(200,168,78,0.08);border-color:var(--gold);}
+
+/* Examples */
+.examples{display:flex;flex-wrap:wrap;gap:6px;margin-top:12px;justify-content:center;}
+.ex-tag{
+  padding:5px 14px;border-radius:16px;background:rgba(255,255,255,0.03);
+  border:1px solid var(--border);color:var(--text-dim);font-size:12px;
+  cursor:pointer;transition:all 0.2s;font-family:inherit;
+}
+.ex-tag:hover{border-color:var(--gold-dim);color:var(--gold);background:rgba(200,168,78,0.06);}
+
+/* Loading */
+.loading{display:none;text-align:center;padding:32px;}
+.loading.show{display:block;}
+.loading .spinner{
+  width:40px;height:40px;margin:0 auto 12px;
+  border:3px solid var(--border);border-top-color:var(--blue);
+  border-radius:50%;animation:spin 0.8s linear infinite;
+}
+@keyframes spin{to{transform:rotate(360deg);}}
+.loading .ltext{color:var(--text-dim);font-size:14px;}
+.loading .ltext span{animation:dots 1.5s steps(4,end) infinite;}
+@keyframes dots{0%,20%{opacity:0;}40%{opacity:1;}100%{opacity:1;}}
+
+/* Results */
+.results{display:none;}
+.results.show{display:block;}
+
+/* Analysis bar */
+.analysis-bar{
+  background:var(--card-bg);border:1px solid var(--border);
+  border-radius:12px;padding:12px 16px;margin-bottom:12px;
+  font-size:13px;color:var(--text-dim);display:flex;align-items:center;gap:8px;
+}
+.analysis-bar .dot{width:6px;height:6px;border-radius:50%;background:var(--gold);animation:pulse 2s ease infinite;}
+@keyframes pulse{0%,100%{box-shadow:0 0 4px var(--gold);}50%{box-shadow:0 0 12px var(--gold);}}
+
+/* Card */
+.card{
+  background:linear-gradient(170deg,#1a1a30,#11111e);
+  border:2px solid var(--border);border-radius:14px;
+  overflow:hidden;margin-bottom:12px;transition:all 0.3s;
+}
+.card.rare{border-color:rgba(200,168,78,0.45);box-shadow:var(--shadow-gold);}
+.card.uncommon{border-color:rgba(74,158,255,0.35);box-shadow:var(--shadow-blue);}
+.card.curse{border-color:rgba(224,64,64,0.35);box-shadow:var(--shadow-red);}
+.card-header{
+  display:flex;align-items:center;padding:14px 16px;
+  border-bottom:1px solid var(--border);gap:12px;
+}
+.card-cost{
+  width:38px;height:38px;border-radius:50%;
+  display:flex;align-items:center;justify-content:center;
+  font-weight:900;font-size:18px;flex-shrink:0;
+}
+.cost-0{background:#505058;color:#bbb;}
+.cost-1{background:linear-gradient(135deg,#4a9eff,#2a6ed0);color:#fff;}
+.cost-2{background:linear-gradient(135deg,#a040e0,#7020b0);color:#fff;}
+.cost-3{background:linear-gradient(135deg,#e0a040,#b06020);color:#fff;}
+.cost-x{background:linear-gradient(135deg,#e04040,#a02020);color:#fff;}
+.card-info{flex:1;min-width:0;}
+.card-name{font-size:20px;font-weight:900;letter-spacing:1px;line-height:1.3;}
+.name-gold{color:var(--gold);}
+.name-blue{color:var(--blue);}
+.name-red{color:var(--red);}
+.name-purple{color:var(--purple);}
+.name-green{color:var(--green);}
+.name-gray{color:#9090a0;}
+.card-type{font-size:12px;color:var(--text-dim);margin-top:1px;}
+.card-body{padding:16px;}
+.card-effect{font-size:14px;line-height:1.8;color:var(--text);white-space:pre-line;}
+.card-effect em{color:var(--gold);font-style:normal;font-weight:700;}
+.card-flavor{
+  margin-top:10px;padding-top:10px;border-top:1px dashed var(--border);
+  font-size:13px;color:var(--text-dim);font-style:italic;line-height:1.5;
+}
+.card-why{
+  margin-top:6px;font-size:12px;color:rgba(200,168,78,0.6);
+  display:flex;align-items:center;gap:4px;
+}
+.card-tags{display:flex;flex-wrap:wrap;gap:6px;padding:0 16px 14px;}
+.tag{
+  padding:3px 10px;border-radius:10px;font-size:11px;font-weight:700;
+  background:rgba(74,158,255,0.08);color:var(--blue);
+  border:1px solid rgba(74,158,255,0.15);
+}
+.tag.gold{background:rgba(200,168,78,0.1);color:var(--gold);border-color:rgba(200,168,78,0.2);}
+.tag.red{background:rgba(224,64,64,0.1);color:var(--red);border-color:rgba(224,64,64,0.2);}
+.tag.green{background:rgba(64,200,96,0.08);color:var(--green);border-color:rgba(64,200,96,0.15);}
+
+/* Best match badge */
+.best-badge{
+  font-size:10px;padding:2px 8px;border-radius:8px;
+  color:var(--gold);background:rgba(200,168,78,0.1);
+  border:1px solid rgba(200,168,78,0.2);
+  white-space:nowrap;
+}
+
+/* Stats */
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:12px;}
+.stat{
+  background:var(--card-bg);border:1px solid var(--border);
+  border-radius:10px;padding:12px 8px;text-align:center;
+}
+.stat .val{font-size:22px;font-weight:900;color:var(--gold);}
+.stat .lbl{font-size:11px;color:var(--text-dim);margin-top:2px;}
+
+/* Toast */
+.toast{
+  position:fixed;top:20px;left:50%;transform:translateX(-50%);
+  background:var(--card-bg);border:1px solid var(--gold-dim);
+  border-radius:24px;padding:10px 24px;color:var(--gold);font-weight:700;
+  font-size:14px;box-shadow:0 4px 20px rgba(0,0,0,0.5);
+  z-index:100;opacity:0;transition:opacity 0.3s;pointer-events:none;
+}
+.toast.show{opacity:1;}
+
+/* Share section */
+.share-section{text-align:center;margin-top:16px;display:none;}
+.share-section.show{display:block;}
+.share-text{
+  width:100%;background:#0a0a15;border:1px solid var(--border);
+  border-radius:10px;padding:10px;color:var(--text-dim);font-size:13px;
+  font-family:inherit;text-align:center;resize:none;margin-bottom:8px;
+}
+.copy-btn{
+  padding:8px 20px;border-radius:20px;border:1px solid var(--gold-dim);
+  background:transparent;color:var(--gold);font-size:13px;
+  cursor:pointer;font-family:inherit;transition:all 0.2s;
+}
+.copy-btn:hover{background:rgba(200,168,78,0.1);}
+.copy-btn.copied{border-color:var(--green);color:var(--green);}
+
+/* Mode hint */
+.mode-hint{
+  text-align:center;font-size:12px;color:var(--text-dim);margin-top:8px;
+  padding:6px 12px;border-radius:12px;
+  background:rgba(255,255,255,0.02);
+}
+.mode-hint.ai{color:rgba(160,64,224,0.7);}
+
+/* Responsive */
+@media(max-width:480px){
+  .container{padding:10px;}
+  .header{padding:24px 8px 16px;}
+  .btn{padding:12px 24px;font-size:14px;}
+  .card-name{font-size:17px;}
+  .stats{grid-template-columns:repeat(2,1fr);}
+}
+</style>
+</head>
+<body>
+
+<div class="bg"><div class="orb"></div><div class="orb"></div><div class="orb"></div></div>
+
+<div class="container">
+  <!-- Header -->
+  <div class="header">
+    <div class="icon">🤖</div>
+    <h1>尖 塔 梗 生 成 器</h1>
+    <p class="sub">你说句话，我给你翻译成<em>鸡煲笑话</em> 🃏</p>
+  </div>
+
+  <!-- Mode Switch -->
+  <div class="modes">
+    <button class="mode-btn active" onclick="setMode('ai')" id="modeAi">
+      🤖 AI 模式 <span class="badge">推荐</span>
+    </button>
+    <button class="mode-btn" onclick="setMode('local')" id="modeLocal">
+      ⚡ 闪电模式
+    </button>
+  </div>
+  <div class="mode-hint ai" id="modeHint">AI 模式：真正的卡牌大师分析，理解语境，匹配全卡池</div>
+
+  <!-- Input Panel -->
+  <div class="panel">
+    <textarea id="textInput" placeholder="在这里描述你的情况&#10;&#10;比如：「今天学了六个单元就学不下去了」&#10;「室友打呼噜一晚上没睡好」&#10;「考试周连续五天考试，快累死了」&#10;&#10;越具体，AI 匹配越精准！" maxlength="600"></textarea>
+    <div class="char-count"><span id="charCount">0</span>/600</div>
+
+    <!-- Image Upload -->
+    <div class="upload-row" id="uploadRow">
+      <button class="upload-btn" onclick="document.getElementById('imageInput').click()" id="uploadBtn">
+        📸 上传图片（可选）
+      </button>
+      <input type="file" id="imageInput" accept="image/*" onchange="handleImage(event)">
+      <span style="font-size:12px;color:var(--text-dim);">配合文字更精准</span>
+    </div>
+    <div class="img-preview" id="imgPreview">
+      <img id="previewImg" src="">
+      <span class="img-name" id="imgName"></span>
+      <button class="img-remove" onclick="clearImage()">✕</button>
+    </div>
+
+    <!-- Examples -->
+    <div class="examples">
+      <button class="ex-tag" onclick="fill('今天学了六个单元就学不下去了')">学不动了</button>
+      <button class="ex-tag" onclick="fill('考试周连续五天考试')">考试周</button>
+      <button class="ex-tag" onclick="fill('室友打呼噜一晚上没睡好')">室友打呼噜</button>
+      <button class="ex-tag" onclick="fill('喝了两杯咖啡肝完了论文')">咖啡肝论文</button>
+      <button class="ex-tag" onclick="fill('做了一下午实验发现数据全错了')">实验错了</button>
+      <button class="ex-tag" onclick="fill('期末复习三天结果考试全不会')">复习白费</button>
+      <button class="ex-tag" onclick="fill('灵感来了疯狂写代码三小时忘了吃饭')">心流状态</button>
+      <button class="ex-tag" onclick="fill('课表排了六节连堂')">课表太满</button>
+      <button class="ex-tag" onclick="fill('debug三小时发现少了个分号')">debug崩溃</button>
+      <button class="ex-tag" onclick="fill('周末一觉睡到下午两点')">周末补觉</button>
+    </div>
+
+    <!-- Buttons -->
+    <div class="btns">
+      <button class="btn btn-go" id="btnLocal" onclick="analyzeLocal()" style="display:none;">
+        ⚡ 本地分析
+      </button>
+      <button class="btn btn-ai" id="btnAI" onclick="analyzeAI()">
+        🤖 AI 分析
+      </button>
+      <button class="btn btn-rand" onclick="randomGo()">🎲 随机</button>
+    </div>
+  </div>
+
+  <!-- Loading -->
+  <div class="loading" id="loading">
+    <div class="spinner"></div>
+    <div class="ltext" id="loadingText">AI 正在分析你的场景……<span>...</span></div>
+  </div>
+
+  <!-- Results -->
+  <div class="results" id="results"></div>
+
+  <!-- Share -->
+  <div class="share-section" id="shareSection">
+    <textarea class="share-text" id="shareText" rows="3" readonly></textarea>
+    <button class="copy-btn" id="copyBtn" onclick="copyShare()">📋 复制分享</button>
+  </div>
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+<script>
+// ============ 状态 ============
+let MODE = 'ai';
+let imageB64 = null;
+let imageName = '';
+
+// ============ 模式切换 ============
+function setMode(mode) {
+  MODE = mode;
+  document.getElementById('modeAi').classList.toggle('active', mode === 'ai');
+  document.getElementById('modeLocal').classList.toggle('active', mode === 'local');
+  document.getElementById('btnAI').style.display = mode === 'ai' ? '' : 'none';
+  document.getElementById('btnLocal').style.display = mode === 'local' ? '' : 'none';
+  const hint = document.getElementById('modeHint');
+  hint.textContent = mode === 'ai'
+    ? 'AI 模式：真正的卡牌大师分析，理解语境，匹配全卡池（需要联网）'
+    : '闪电模式：本地关键词匹配，秒出结果，离线可用（卡池有限）';
+  hint.className = 'mode-hint ' + (mode === 'ai' ? 'ai' : '');
+}
+
+// ============ 图片处理 ============
+function handleImage(e) {
+  const f = e.target.files[0];
+  if (!f) return;
+  if (f.size > 10*1024*1024) { toast('图片太大，请选10MB以内'); return; }
+  imageName = f.name;
+  const r = new FileReader();
+  r.onload = ev => {
+    imageB64 = ev.target.result.split(',')[1];
+    document.getElementById('previewImg').src = ev.target.result;
+    document.getElementById('imgName').textContent = f.name;
+    document.getElementById('imgPreview').classList.add('show');
+    document.getElementById('uploadBtn').classList.add('active');
+  };
+  r.readAsDataURL(f);
+}
+
+function clearImage() {
+  imageB64 = null; imageName = '';
+  document.getElementById('imageInput').value = '';
+  document.getElementById('imgPreview').classList.remove('show');
+  document.getElementById('uploadBtn').classList.remove('active');
+}
+
+// ============ 字符计数 ============
+document.getElementById('textInput').addEventListener('input', function() {
+  document.getElementById('charCount').textContent = this.value.length;
+});
+
+// ============ AI 分析 ============
+async function analyzeAI() {
+  const text = document.getElementById('textInput').value.trim();
+  if (!text && !imageB64) { toast('请输入文字或上传图片'); return; }
+  if (text.length < 2 && !imageB64) { toast('输入太短了，多说两句嘛'); return; }
+
+  showLoading(true, 'AI 正在启动……通电……开机……自检……');
+  document.getElementById('results').classList.remove('show');
+  document.getElementById('btnAI').disabled = true;
+
+  try {
+    // 确定 API 地址（Vercel 部署时用相对路径，本地用 Python 服务器）
+    const apiUrl = window.location.hostname === 'localhost'
+      ? 'http://localhost:8765/api/analyze'
+      : '/api/analyze';
+
+    const body = { text: text || undefined };
+    if (imageB64) body.image = imageB64;
+
+    const resp = await fetch(apiUrl, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+    });
+
+    if (!resp.ok) {
+      const err = await resp.json().catch(() => ({}));
+      throw new Error(err.message || `服务器返回 ${resp.status}`);
+    }
+
+    const data = await resp.json();
+    showLoading(false);
+    renderCards(data, text || '图片分析');
+
+  } catch (err) {
+    console.error(err);
+    showLoading(false);
+    // AI 失败时降级到本地模式
+    toast('AI 服务不可用，已切换到闪电模式 ⚡');
+    analyzeLocal();
+  } finally {
+    document.getElementById('btnAI').disabled = false;
+  }
+}
+
+// ============ 本地关键词分析（保留作为后备） ============
+function analyzeLocal() {
+  const text = document.getElementById('textInput').value.trim();
+  if (!text) { toast('请输入文字'); return; }
+  if (text.length < 2) { toast('输入太短了'); return; }
+
+  showLoading(true, '正在匹配卡牌……');
+  setTimeout(() => {
+    showLoading(false);
+    const cards = localMatch(text);
+    const result = { analysis: '本地关键词匹配', cards };
+    renderCards(result, text);
+  }, 400);
+}
+
+// ============ 随机 ============
+function randomGo() {
+  const scenes = [
+    '今天学了六个单元就学不下去了','考试周连续五天考试累死了',
+    '室友打呼噜一晚上没睡好','喝了两杯咖啡肝完了论文',
+    '做了一下午实验发现数据全错了','课表排了六节连堂',
+    '期末复习三天结果考试全不会','任务太多了一个都做不动',
+    '被老师骂了一顿然后进步了','灵感来了疯狂写代码三小时忘了吃饭',
+    '教务系统抢课又崩了','周末一觉睡到下午两点',
+    'debug了三小时发现少了个分号','食堂排队排到菜没了',
+    '同时写五份作业快疯了','这学期选了一门巨水的课',
+    '收藏夹里一堆教程从来没看过','小组作业队友全在划水',
+    '今天啥也没干光刷手机了','课上到一半突然被点名回答问题',
+    '刚开学就感觉已经跟不上了',
+  ];
+  document.getElementById('textInput').value = scenes[Math.floor(Math.random()*scenes.length)];
+  if (MODE === 'ai') analyzeAI(); else analyzeLocal();
+}
+
+// ============ 渲染 ============
+function renderCards(data, inputText) {
+  const panel = document.getElementById('results');
+  const cards = data.cards || [];
+  const analysis = data.analysis || '';
+
+  let html = '';
+
+  // 分析栏
+  const shortInput = inputText.length > 40 ? inputText.slice(0,40)+'…' : inputText;
+  html += `<div class="analysis-bar"><div class="dot"></div>${analysis} — 输入："${shortInput}" → 匹配 ${cards.length} 张</div>`;
+
+  // 卡牌
+  cards.forEach((c, i) => {
+    const rarityClass = c.rarity === 'rare' || c.rarity === 'curse' ? c.rarity : (c.rarity === 'uncommon' ? 'uncommon' : '');
+    const costClass = `cost-${isNaN(c.cost) ? 'x' : (Number(c.cost) > 3 ? 'x' : c.cost)}`;
+    const nameColor = c.cost_color === 'gold' ? 'name-gold' : c.cost_color === 'red' ? 'name-red' : c.cost_color === 'purple' ? 'name-purple' : c.cost_color === 'green' ? 'name-green' : c.cost_color === 'gray' ? 'name-gray' : 'name-blue';
+    const sevEmoji = c.severity === 'savage' ? '💀' : c.severity === 'funny' ? '😂' : c.severity === 'positive' ? '✨' : '💚';
+    const tagClass = c.rarity === 'rare' ? 'gold' : c.rarity === 'curse' ? 'red' : c.rarity === 'uncommon' ? '' : '';
+
+    html += `
+    <div class="card ${rarityClass}">
+      <div class="card-header">
+        <div class="card-cost ${costClass}">${c.cost}</div>
+        <div class="card-info">
+          <div class="card-name ${nameColor}">${c.name}</div>
+          <div class="card-type">${c.card_type} · ${(c.character||'defect') === 'defect' ? '故障机器人' : c.character === 'ironclad' ? '铁甲战士' : c.character === 'silent' ? '静默猎手' : c.character === 'watcher' ? '观者' : c.character === 'neutral' ? '无色' : c.character}</div>
+        </div>
+        ${i === 0 ? '<span class="best-badge">🎯 最佳</span>' : ''}
+        <span style="font-size:18px;">${sevEmoji}</span>
+      </div>
+      <div class="card-body">
+        <div class="card-effect">${(c.effect||'').replace(/\n/g,'<br>')}</div>
+        ${c.flavor ? `<div class="card-flavor">${c.flavor}</div>` : ''}
+        ${c.why ? `<div class="card-why">💡 ${c.why}</div>` : ''}
+      </div>
+      <div class="card-tags">
+        <span class="tag ${tagClass}">${c.card_type || '卡牌'}</span>
+        <span class="tag ${tagClass}">${sevEmoji} ${c.severity === 'savage' ? '暴击' : c.severity === 'funny' ? '搞笑' : c.severity === 'positive' ? '正能量' : '治愈'}</span>
+        ${c.rarity ? `<span class="tag ${tagClass}">${c.rarity === 'rare' ? '🔶 稀有' : c.rarity === 'uncommon' ? '🔵 罕见' : c.rarity === 'curse' ? '🔴 诅咒' : c.rarity === 'common' ? '普通' : '基础'}</span>` : ''}
+      </div>
+    </div>`;
+  });
+
+  // 统计
+  html += `<div class="stats">
+    <div class="stat"><div class="val">${cards.length}</div><div class="lbl">匹配卡牌</div></div>
+    <div class="stat"><div class="val">${cards[0]?.rarity === 'rare' ? '🔶' : cards[0]?.rarity === 'curse' ? '🔴' : '🔵'}</div><div class="lbl">最佳稀有度</div></div>
+    <div class="stat"><div class="val">${cards[0]?.severity === 'savage' ? '💀' : cards[0]?.severity === 'funny' ? '😂' : '✨'}</div><div class="lbl">伤害程度</div></div>
+    <div class="stat"><div class="val">${Math.floor(Math.random()*9000)+1000}</div><div class="lbl">今日迫害次数</div></div>
+  </div>`;
+
+  // 分享文字
+  const shareText = cards.map(c => `【${c.name}】${c.flavor || c.effect?.split('\n')[0] || ''}`).join('\n');
+  html += `<div class="share-section show">
+    <textarea class="share-text" id="shareText" rows="3" readonly>${shareText.replace(/"/g,'"')}</textarea>
+    <button class="copy-btn" id="copyBtn" onclick="copyShare()">📋 复制分享</button>
+  </div>`;
+
+  panel.innerHTML = html;
+  panel.classList.add('show');
+  panel.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+}
+
+// ============ 复制分享 ============
+function copyShare() {
+  const ta = document.getElementById('shareText');
+  if (!ta) return;
+  ta.select();
+  document.execCommand('copy');
+  const btn = document.getElementById('copyBtn');
+  btn.textContent = '✅ 已复制！';
+  btn.classList.add('copied');
+  toast('已复制！去迫害你的朋友吧 😂');
+  setTimeout(() => { btn.textContent = '📋 复制分享'; btn.classList.remove('copied'); }, 2000);
+}
+
+// ============ 工具函数 ============
+function fill(t) { document.getElementById('textInput').value = t; document.getElementById('charCount').textContent = t.length; }
+function toast(msg) { const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2500); }
+function showLoading(s, text) { document.getElementById('loading').classList.toggle('show',s); if(text) document.getElementById('loadingText').innerHTML=text+'<span>...</span>'; }
+
+// ============ 本地关键词匹配引擎（后备方案） ============
+function localMatch(text) {
+  const lower = text.toLowerCase();
+  const all = CARD_DB_LOCAL.map(c => {
+    let score = 0;
+    for (const kw of c.keywords) { if (lower.includes(kw)) score += kw.length; }
+    for (const ak of c.antiKeywords||[]) { if (lower.includes(ak)) score -= ak.length*2; }
+    return { card: c, score };
+  });
+  all.sort((a,b) => b.score - a.score);
+  const top = all.filter(s => s.score > 0).slice(0, 3);
+  if (top.length === 0) return [all[0].card]; // 兜底
+  return top.map(s => s.card);
+}
+
+// 精简的本地卡牌库（AI 模式不可用时使用）
+const CARD_DB_LOCAL = [
+  {name:'还在启动',cost:'?',cost_color:'gold',card_type:'状态',rarity:'basic',character:'defect',effect:'每回合开始时：<em>继续启动</em>。\n当其他人都已完成任务时，你仍然<em>没有启动完成</em>。',flavor:'「通电、开机、自检、启动——然后被一巴掌拍在电源键上。」',severity:'funny',keywords:['还没开始','拖延','还没好','等一下','还在准备','磨蹭','论文还没写','作业还没做','一直没开始'],antiKeywords:[]},
+  {name:'偏差认知',cost:'1',cost_color:'gold',card_type:'能力',rarity:'rare',character:'defect',effect:'获得 <em>4 点集中</em>（自信）。\n在你的回合开始时，失去 <em>1 点集中</em>。',flavor:'「你以为自己已经成型了——殊不知这本身就是一种认知的偏差。」',severity:'savage',keywords:['以为','觉得','感觉','学会了','记住了','复习','考前','考试','忘记','忘了','没考好','白复习','原来','结果','没想到'],antiKeywords:[]},
+  {name:'凡庸',cost:'∞',cost_color:'red',card_type:'诅咒',rarity:'curse',character:'neutral',effect:'不可打出。\n你的手牌<em>太多了</em>，以至于这一张根本<em>打不出来</em>。',flavor:'「抓了那么多牌，结果一张都打不出去——这就是凡庸。」',severity:'funny',keywords:['太多','太多了','做不完','做不动','做不下','学不完','学不动','学不下去','做不下去','课多','作业多','一堆','一大堆','六个','七个','八个','九个','十个','好多','排满','超额'],antiKeywords:[]},
+  {name:'鬼抽',cost:'0',cost_color:'red',card_type:'状态',rarity:'curse',character:'neutral',effect:'本回合抽到的牌全是<em>打击</em>和<em>防御</em>。\n你想要的牌全在<em>牌堆底部</em>。',flavor:'「考试正好考你没复习的那一章——纯鬼抽。」',severity:'funny',keywords:['运气差','倒霉','水逆','不幸','运气不好','没抽到','手气差','点背','背','怎么这么惨','哭了','心态崩','崩溃','呼噜','没睡好','打呼噜'],antiKeywords:[]},
+  {name:'耗尽',cost:'2',cost_color:'blue',card_type:'技能',rarity:'uncommon',character:'defect',effect:'获得 <em>3 点集中</em>。\n消耗一个充能球栏位。\n（肝完这件事，HP上限永久-1）',flavor:'「睡什么睡，起来嗨——然后第二天整个人都废了。」',severity:'savage',keywords:['熬夜','通宵','透支','肝','一口气肝','赶完','赶工','刷夜','不睡觉','没睡觉','通宵达旦','肝到天亮','爆肝'],antiKeywords:[]},
+  {name:'虚无',cost:'1',cost_color:'blue',card_type:'技能',rarity:'uncommon',character:'neutral',effect:'如果本回合不打出，此牌将<em>永久消失</em>。',flavor:'「虚无：这回合不打就没了。和人生中大多数机会一样。」',severity:'funny',keywords:['错过','没了','没选上','选课','抢课','卖完了','没抢到','机会','错过机会','结束了','下架'],antiKeywords:[]},
+  {name:'回响形态',cost:'3',cost_color:'gold',card_type:'能力',rarity:'rare',character:'defect',effect:'每回合打出的第一张牌<em>触发两次</em>。\n你在群里的每句话都有人<em>复读</em>。',flavor:'「回响形态：群里第一个人发了，然后所有人都跟着发了。」',severity:'funny',keywords:['复读','重复','又','再','还来','抄','复制','再说一遍','又一次','一样','还是','也','继续继续'],antiKeywords:[]},
+  {name:'自我修复',cost:'1',cost_color:'blue',card_type:'能力',rarity:'uncommon',character:'defect',effect:'战斗结束后回复 <em>7 点生命</em>。\n（睡一觉，什么都会好起来的。）',flavor:'「周六早上十一点自然醒——这就是自我修复的最高境界。」',severity:'healing',keywords:['睡觉','休息','恢复','躺','周末','放假','休','睡','回血','补觉','养生','放松','躺平','睡到','歇'],antiKeywords:[]},
+  {name:'内核加速',cost:'0',cost_color:'blue',card_type:'技能',rarity:'uncommon',character:'defect',effect:'获得 <em>2 点能量</em>。抽 <em>2 张牌</em>。\n将一张<em>虚空</em>（咖啡因崩溃）放入弃牌堆。',flavor:'「喝完咖啡的一瞬间你以为自己是观者——过一小时你就是鸡煲。」',severity:'funny',keywords:['咖啡','红牛','提神','能量','加速','猛冲','冲了','加油','干','鸡血','肾上腺素'],antiKeywords:[]},
+  {name:'重启',cost:'0',cost_color:'blue',card_type:'技能',rarity:'uncommon',character:'defect',effect:'将手牌洗入抽牌堆。抽<em>等量</em>的牌。\n（代码全删了重写。实验全错了重做。）',flavor:'「重启一时爽，一直重启一直爽——直到发现重来三次还是一样。」',severity:'funny',keywords:['重来','重做','删','删除','重新','再来','推倒','重置','清除','重写','推翻','清零'],antiKeywords:[]},
+  {name:'精良改造',cost:'2',cost_color:'blue',card_type:'攻击',rarity:'uncommon',character:'defect',effect:'造成 <em>15 点伤害</em>。本场战斗中此牌能耗<em>永久 -1</em>。\n（这作业越做到后面越快。）',flavor:'「第一题做一小时，第二题四十分钟，第三题十五分钟——精良改造了。」',severity:'positive',keywords:['越来越','进步','变好','改善','好转','上手','熟练','渐入佳境','顺手','越做越快','越来越快'],antiKeywords:[]},
+  {name:'碎片整理',cost:'1',cost_color:'blue',card_type:'能力',rarity:'uncommon',character:'defect',effect:'获得 <em>2 点集中</em>。\n你的桌面现在很整洁。',flavor:'「收拾完房间的那一刻，你觉得人生都美好了——虽然这种状态只能维持半天。」',severity:'positive',keywords:['收拾','整理','打扫','清洁','归纳','笔记整理','收纳','分类','清理','清理桌面'],antiKeywords:[]},
+  {name:'硬化',cost:'1',cost_color:'blue',card_type:'技能',rarity:'uncommon',character:'defect',effect:'消耗一张牌。获得 <em>16 点格挡</em>。\n被骂了一次，你的脸皮厚了一层。',flavor:'「被导师骂完——硬化了。不是变冷漠，是变强了。」',severity:'positive',keywords:['被骂','批评','打击','挫折','失败','被拒','被怼','受苦','教训','变强','克服'],antiKeywords:[]},
+  {name:'循环',cost:'1',cost_color:'blue',card_type:'能力',rarity:'uncommon',character:'defect',effect:'触发最右边充能球的被动效果。\ndebug → 改 → 又出 bug → debug → …',flavor:'「循环：你在一个循环里。好消息是你知道怎么走出来，坏消息是你走不出来。」',severity:'funny',keywords:['循环','转圈','debug','改','又出bug','陷入','走不出来','过不去','反反复复'],antiKeywords:[]},
+  {name:'裂变',cost:'1',cost_color:'gold',card_type:'技能',rarity:'rare',character:'defect',effect:'移除所有充能球。每移除1个获得<em>1点能量</em>和抽1张牌。\n同时写五份作业 = 裂变了。',flavor:'「五个作业同时赶——这就是裂变的艺术。每个窗口都在燃烧。」',severity:'funny',keywords:['多线程','多任务','同时','好几件事','兼顾','切换','分身','并行','一边一边','多头','几件事','五个','多个'],antiKeywords:[]},
+  {name:'创造性AI',cost:'3',cost_color:'gold',card_type:'能力',rarity:'rare',character:'defect',effect:'每回合开始时，随机生成 1 张<em>能力牌</em>加入手牌。\n你的灵感<em>源源不断</em>。',flavor:'「AI出奇迹！虽然有时候给你塞的全是3费废牌，让你血压拉满。」',severity:'funny',keywords:['灵感','想法','创意','点子','brainstorm','头脑风暴','冒出来','灵光一闪','创造','沉浸','心流'],antiKeywords:[]},
+  {name:'搜寻',cost:'0',cost_color:'gold',card_type:'技能',rarity:'rare',character:'defect',effect:'从抽牌堆中选择 <em>1 张牌</em>加入手牌。',flavor:'「在相册里翻了三分钟终于找到那张表情包——你刚刚发动了搜寻。」',severity:'positive',keywords:['找','搜索','查找','在哪','找东西','找不到','翻','搜一下','找一下'],antiKeywords:[]},
+  {name:'混沌',cost:'2',cost_color:'blue',card_type:'技能',rarity:'uncommon',character:'defect',effect:'随机填充 <em>2 个充能球栏位</em>。\n你不知道会填进去什么。',flavor:'「教务系统抢课时崩了——这不是混沌，这是创造性AI塞了一手废牌。」',severity:'funny',keywords:['乱','一团糟','搞砸','紊乱','系统崩','服务器崩','抢课崩','卡了','崩溃了','混乱','乱套','乱七八糟','崩了'],antiKeywords:[]},
+  {name:'机器学习',cost:'1',cost_color:'blue',card_type:'能力',rarity:'uncommon',character:'defect',effect:'在你的回合开始时，额外抽 <em>1 张牌</em>。\n每天背 20 个单词 = 机器学习。',flavor:'「背单词就是纯机器学习——每天多学一点，一年后你发现自己还是在用 abandon。」',severity:'positive',keywords:['背单词','每天','学习','积累','慢慢','坚持','每天一点','打卡','学英语','单词','背'],antiKeywords:[]},
+  {name:'伤口',cost:'∞',cost_color:'red',card_type:'状态',rarity:'curse',character:'neutral',effect:'不可打出。\n占据你的一个抽牌位。\n（那门水课——纯纯一张伤口。）',flavor:'「有些课就像伤口：不可打出，纯占卡位，还污染你的牌库。」',severity:'savage',keywords:['没用','废','没价值','水课','水','垃圾','废物','没用的人','浪费','无聊','毫无意义'],antiKeywords:[]},
+  {name:'万物一心',cost:'2',cost_color:'gold',card_type:'攻击',rarity:'rare',character:'defect',effect:'造成 <em>10 点伤害</em>。将弃牌堆中所有 <em>0 费牌</em>加入手牌。\n你在心流中。世界消失了。',flavor:'「万物一心：全神贯注到忘记吃饭——回过神来已经下午三点了。」',severity:'positive',keywords:['心流','沉浸','专注','忘记时间','一气呵成','流','入迷','忘了时间','沉浸式','忘了吃饭'],antiKeywords:[]},
+  {name:'第四强的角色',cost:'0',cost_color:'red',card_type:'状态',rarity:'basic',character:'defect',effect:'你是尖塔里<em>第四强</em>的角色。\n一共四个角色。\n但这不重要。重要的是你还在启动。',flavor:'「鸡煲是尖塔里第四强的角色——因为一共只有四个角色。」',severity:'savage',keywords:['菜','弱','废物','不行','最差','垫底','菜鸡','倒数','末位','第四','好弱','太菜'],antiKeywords:[]},
+];
+
+// 字符计数初始化
+document.getElementById('charCount').textContent = '0';
+
+// 键盘快捷键
+document.addEventListener('keydown', e => {
+  if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+    e.preventDefault();
+    MODE === 'ai' ? analyzeAI() : analyzeLocal();
+  }
+});
+
+toast('🤖 尖塔梗生成器就绪！Ctrl+Enter 快速分析');
+</script>
+</body>
+</html>
