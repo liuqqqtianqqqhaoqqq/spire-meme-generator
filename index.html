@@ -102,8 +102,16 @@ const PASSWORD='yit';
 
 let pwdUnlocked=false;
 
-// 初始化
+// 初始化：清除旧版localStorage残留
+try{const old=localStorage.getItem('sts_key');if(old&&old.includes('***'))localStorage.removeItem('sts_key')}catch(e){}
 pwdUnlocked=localStorage.getItem('sts_pwd')==='1';
+// 页面加载时向服务器验证密码状态
+if(pwdUnlocked){
+  const apiUrl=window.location.hostname==='localhost'?'http://localhost:8765/api/analyze':'/api/analyze';
+  fetch(apiUrl,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({text:'verify',password:PASSWORD,verify_only:true})})
+    .then(r=>{if(!r.ok){pwdUnlocked=false;localStorage.removeItem('sts_pwd');updateUI()}})
+    .catch(()=>{});
+}
 
 function updateUI(){
   if(pwdUnlocked){
