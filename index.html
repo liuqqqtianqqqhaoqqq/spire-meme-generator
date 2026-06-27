@@ -481,7 +481,7 @@ async function analyzeAI(){
 
   // ── 方式2：密码解锁 → 服务器代理 ──
   try{
-    const apiUrl=window.location.hostname==='localhost'?'http://localhost:8765/api/analyze':'/api/analyze';
+    const apiUrl=window.location.hostname==='localhost'?'http://localhost:8765/api/analyze':'https://spire-meme-generator-production.up.railway.app/api/analyze';
     const body={text:text||undefined};
     if(imgB64)body.image=imgB64;
     if(aiUnlocked)body.password=unlockPwd;
@@ -611,7 +611,7 @@ async function unlockWithPassword(){
   if(!pwd){document.getElementById('pwdErr').classList.add('show');return;}
   document.getElementById('pwdErr').classList.remove('show');
 
-  const apiUrl=window.location.hostname==='localhost'?'http://localhost:8765/api/analyze':'/api/analyze';
+  const apiUrl=window.location.hostname==='localhost'?'http://localhost:8765/api/analyze':'https://spire-meme-generator-production.up.railway.app/api/analyze';
   try{
     const resp=await fetch(apiUrl,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({text:'verify',password:pwd,verify_only:true})});
     if(resp.ok){

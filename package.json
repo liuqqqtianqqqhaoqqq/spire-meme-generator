@@ -3,6 +3,7 @@
   "version": "2.0.0",
   "description": "杀戮尖塔梗生成器 - 你说句话，我给你翻译成鸡煲笑话",
   "scripts": {
+    "start": "node railway-server.js",
     "dev": "vercel dev",
     "deploy": "vercel --prod"
   },
