@@ -276,6 +276,53 @@ textarea::placeholder{color:var(--text-dim);font-size:14px;}
   .card-name{font-size:17px;}
   .stats{grid-template-columns:repeat(2,1fr);}
 }
+
+	/* Lock / Settings */
+	.lock-icon{
+	  cursor:pointer;font-size:18px;padding:6px 8px;border-radius:50%;
+	  transition:all 0.2s;opacity:0.6;background:transparent;border:none;color:var(--text-dim);
+	}
+	.lock-icon:hover{opacity:1;background:rgba(255,255,255,0.05);}
+	.lock-icon.unlocked{opacity:1;color:var(--gold);}
+	.modal-overlay{
+	  display:none;position:fixed;top:0;left:0;width:100%;height:100%;
+	  background:rgba(0,0,0,0.7);z-index:200;align-items:center;justify-content:center;
+	}
+	.modal-overlay.show{display:flex;}
+	.modal{
+	  background:var(--card-bg);border:1px solid var(--border);
+	  border-radius:var(--radius);padding:24px;max-width:380px;width:90%;
+	  animation:modalIn 0.25s ease;
+	}
+	@keyframes modalIn{from{opacity:0;transform:scale(0.95) translateY(10px);}to{opacity:1;transform:scale(1) translateY(0);}}
+	.modal h3{font-size:18px;margin-bottom:12px;display:flex;align-items:center;gap:8px;}
+	.modal p{font-size:13px;color:var(--text-dim);margin-bottom:16px;line-height:1.6;}
+	.modal input[type=password],.modal input[type=text]{
+	  width:100%;padding:12px;border-radius:10px;border:1px solid var(--border);
+	  background:#0a0a15;color:var(--text);font-size:15px;font-family:inherit;
+	  outline:none;margin-bottom:12px;
+	}
+	.modal input:focus{border-color:var(--blue);}
+	.modal .error-msg{font-size:12px;color:var(--red);margin-bottom:8px;display:none;}
+	.modal .error-msg.show{display:block;}
+	.modal .modal-btns{display:flex;gap:8px;justify-content:flex-end;}
+	.modal .modal-btns button{
+	  padding:8px 20px;border-radius:20px;border:none;font-size:14px;
+	  cursor:pointer;font-family:inherit;font-weight:700;transition:all 0.2s;
+	}
+	.modal .btn-cancel{background:transparent;border:1px solid var(--border);color:var(--text-dim);}
+	.modal .btn-cancel:hover{color:var(--text);border-color:var(--text-dim);}
+	.modal .btn-confirm{background:linear-gradient(135deg,var(--blue),#3060d0);color:#fff;}
+	.modal .divider{text-align:center;color:var(--text-dim);font-size:12px;margin:16px 0;position:relative;}
+	.modal .divider::before,.modal .divider::after{
+	  content:'';position:absolute;top:50%;width:35%;height:1px;background:var(--border);
+	}
+	.modal .divider::before{left:0;}
+	.modal .divider::after{right:0;}
+	.modal .unlock-status{padding:8px 12px;border-radius:8px;font-size:12px;margin-bottom:12px;display:none;}
+	.modal .unlock-status.show{display:block;}
+	.modal .unlock-status.success{background:rgba(64,200,96,0.08);color:var(--green);border:1px solid rgba(64,200,96,0.2);}
+	.modal .unlock-status.info{background:rgba(74,158,255,0.08);color:var(--blue);border:1px solid rgba(74,158,255,0.2);}
 </style>
 </head>
 <body>
@@ -299,6 +346,7 @@ textarea::placeholder{color:var(--text-dim);font-size:14px;}
       ⚡ 闪电模式
     </button>
   </div>
+	    <span class="lock-icon" id="lockIcon" onclick="openSettings()" title="AI 访问设置">🔒</span>
   <div class="mode-hint ai" id="modeHint">AI 模式：真正的卡牌大师分析，理解语境，匹配全卡池</div>
 
   <!-- Input Panel -->
@@ -362,6 +410,29 @@ textarea::placeholder{color:var(--text-dim);font-size:14px;}
   </div>
 </div>
 
+
+  <!-- Settings Modal -->
+  <div class="modal-overlay" id="settingsModal">
+    <div class="modal">
+      <h3>⚙️ AI 模式解锁</h3>
+      <p>AI 模式需要解锁才能使用。输入密码可使用站长的 API，或填入你自己的 Key。</p>
+      <div class="unlock-status" id="unlockStatus"></div>
+      <input type="password" id="pwdInput" placeholder="🔑 输入访问密码" autocomplete="off">
+      <div class="error-msg" id="pwdError">密码错误，请重试</div>
+      <div class="modal-btns">
+        <button class="btn-cancel" onclick="closeSettings()">取消</button>
+        <button class="btn-confirm" onclick="unlockWithPassword()">解锁 🔓</button>
+      </div>
+      <div class="divider">或者</div>
+      <input type="text" id="keyInput" placeholder="🗝️ 填入自己的 API Key" autocomplete="off">
+      <p style="font-size:11px;color:var(--text-dim);margin-top:-4px;">💡 Key 只存在你的浏览器里，不会上传到服务器</p>
+      <div class="modal-btns">
+        <button class="btn-cancel" onclick="closeSettings()">取消</button>
+        <button class="btn-confirm" onclick="saveOwnKey()">保存 Key</button>
+      </div>
+    </div>
+  </div>
+
 <!-- Toast -->
 <div class="toast" id="toast"></div>
 
@@ -370,6 +441,9 @@ textarea::placeholder{color:var(--text-dim);font-size:14px;}
 let MODE = 'ai';
 let imageB64 = null;
 let imageName = '';
+let AI_UNLOCKED = false;
+let USER_API_KEY = '';
+let UNLOCK_PASSWORD = '';
 
 // ============ 模式切换 ============
 function setMode(mode) {
@@ -379,10 +453,16 @@ function setMode(mode) {
   document.getElementById('btnAI').style.display = mode === 'ai' ? '' : 'none';
   document.getElementById('btnLocal').style.display = mode === 'local' ? '' : 'none';
   const hint = document.getElementById('modeHint');
-  hint.textContent = mode === 'ai'
-    ? 'AI 模式：真正的卡牌大师分析，理解语境，匹配全卡池（需要联网）'
-    : '闪电模式：本地关键词匹配，秒出结果，离线可用（卡池有限）';
-  hint.className = 'mode-hint ' + (mode === 'ai' ? 'ai' : '');
+  if (mode === 'ai' && !AI_UNLOCKED && !USER_API_KEY) {
+    hint.textContent = '\uD83D\uDD12 AI \u6A21\u5F0F\u5DF2\u9501\u5B9A \u2014 \u70B9\u51FB \uD83D\uDD12 \u56FE\u6807\u89E3\u9501';
+    hint.className = 'mode-hint';
+  } else if (mode === 'ai') {
+    hint.textContent = 'AI \u6A21\u5F0F\uFF1A' + (AI_UNLOCKED ? '\u5DF2\u7528\u5BC6\u7801\u89E3\u9501 \u2705' : '\u4F7F\u7528\u81EA\u6709 Key \u2705') + '\uFF0C\u7406\u89E3\u8BED\u5883\uFF0C\u5339\u914D\u5168\u5361\u6C60';
+    hint.className = 'mode-hint ai';
+  } else {
+    hint.textContent = '\u95EA\u7535\u6A21\u5F0F\uFF1A\u672C\u5730\u5173\u952E\u8BCD\u5339\u914D\uFF0C\u79D2\u51FA\u7ED3\u679C\uFF0C\u79BB\u7EBF\u53EF\u7528\uFF08\u5361\u6C60\u6709\u9650\uFF09';
+    hint.className = 'mode-hint';
+  }
 }
 
 // ============ 图片处理 ============
@@ -432,6 +512,8 @@ async function analyzeAI() {
 
     const body = { text: text || undefined };
     if (imageB64) body.image = imageB64;
+    if (AI_UNLOCKED) body.password = UNLOCK_PASSWORD;
+    if (USER_API_KEY) body.api_key = USER_API_KEY;
 
     const resp = await fetch(apiUrl, {
       method: 'POST',
@@ -617,6 +699,118 @@ const CARD_DB_LOCAL = [
 ];
 
 // 字符计数初始化
+
+// ============ 设置 / 解锁 ============
+function openSettings() {
+  document.getElementById('settingsModal').classList.add('show');
+  document.getElementById('pwdInput').value = '';
+  document.getElementById('keyInput').value = USER_API_KEY;
+  document.getElementById('pwdError').classList.remove('show');
+  updateUnlockStatus();
+  setTimeout(() => document.getElementById('pwdInput').focus(), 200);
+}
+
+function closeSettings() {
+  document.getElementById('settingsModal').classList.remove('show');
+  setMode(MODE);
+}
+
+function updateUnlockStatus() {
+  const s = document.getElementById('unlockStatus');
+  if (AI_UNLOCKED) {
+    s.className = 'unlock-status success show';
+    s.textContent = '✅ 已解锁 — AI 模式可用';
+  } else if (USER_API_KEY) {
+    s.className = 'unlock-status info show';
+    s.textContent = '🗝️ 当前使用自有 Key — AI 模式可用';
+  } else {
+    s.className = 'unlock-status';
+  }
+}
+
+async function unlockWithPassword() {
+  const pwd = document.getElementById('pwdInput').value.trim();
+  if (!pwd) { document.getElementById('pwdError').classList.add('show'); return; }
+  document.getElementById('pwdError').classList.remove('show');
+
+  const apiUrl = window.location.hostname === 'localhost'
+    ? 'http://localhost:8765/api/analyze'
+    : '/api/analyze';
+
+  try {
+    const resp = await fetch(apiUrl, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ text: '测试连接', password: pwd, verify_only: true }),
+    });
+    if (resp.ok) {
+      AI_UNLOCKED = true;
+      UNLOCK_PASSWORD = pwd;
+      USER_API_KEY = '';
+      localStorage.setItem('sts_ai_unlocked', '1');
+      localStorage.setItem('sts_password', pwd);
+      localStorage.removeItem('sts_user_key');
+      updateLockIcon();
+      updateUnlockStatus();
+      toast('✅ AI 模式已解锁！');
+      setMode('ai');
+      closeSettings();
+    } else {
+      const data = await resp.json().catch(() => ({}));
+      if (data.error === 'wrong_password') {
+        document.getElementById('pwdError').classList.add('show');
+      } else {
+        toast('验证失败，检查密码后重试');
+      }
+    }
+  } catch (e) {
+    toast('无法连接服务器，请确保已部署到 Vercel');
+  }
+}
+
+function saveOwnKey() {
+  const key = document.getElementById('keyInput').value.trim();
+  if (!key) { toast('请输入 API Key'); return; }
+  if (!key.startsWith('sk-')) { toast('Key 格式不正确，应以 sk- 开头'); return; }
+  USER_API_KEY = key;
+  AI_UNLOCKED = false;
+  UNLOCK_PASSWORD = '';
+  localStorage.setItem('sts_user_key', key);
+  localStorage.removeItem('sts_ai_unlocked');
+  localStorage.removeItem('sts_password');
+  updateLockIcon();
+  updateUnlockStatus();
+  toast('✅ 已保存你的 API Key！AI 模式可用');
+  setMode('ai');
+  closeSettings();
+}
+
+function updateLockIcon() {
+  const icon = document.getElementById('lockIcon');
+  if (AI_UNLOCKED || USER_API_KEY) {
+    icon.textContent = '🔓';
+    icon.classList.add('unlocked');
+    icon.title = 'AI 已解锁 — 点击管理设置';
+  } else {
+    icon.textContent = '🔒';
+    icon.classList.remove('unlocked');
+    icon.title = 'AI 已锁定 — 点击解锁';
+  }
+}
+
+// 初始化：从 localStorage 恢复状态
+(function initState() {
+  if (localStorage.getItem('sts_ai_unlocked') === '1') {
+    AI_UNLOCKED = true;
+    UNLOCK_PASSWORD = localStorage.getItem('sts_password') || '';
+  }
+  if (localStorage.getItem('sts_user_key')) {
+    USER_API_KEY = localStorage.getItem('sts_user_key');
+  }
+  updateLockIcon();
+  setMode(MODE);
+})();
+
 document.getElementById('charCount').textContent = '0';
 
 // 键盘快捷键

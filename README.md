@@ -7,7 +7,8 @@
 ## ✨ 功能
 
 - **🤖 AI 模式** — GPT 驱动，理解语境，匹配全卡池，效果精准搞笑
-- **⚡ 闪电模式** — 本地关键词匹配，秒出结果，离线可用
+- **🔐 密码锁** — AI 模式默认锁定，需密码解锁或用自带 Key，保护 API 额度
+- **⚡ 闪电模式** — 本地关键词匹配，秒出结果，离线可用，永远免费
 - **📸 图片支持** — 上传图片，AI 自动识别场景并匹配梗
 - **📱 移动端适配** — 手机上打开就能用
 - **🔗 一键分享** — 复制梗文字，发到群里迫害朋友
@@ -19,7 +20,9 @@
 1. Fork 这个仓库到你的 GitHub
 2. 打开 [vercel.com](https://vercel.com)，用 GitHub 登录
 3. 点击 "New Project" → 导入 fork 的仓库
-4. **🔑 设置环境变量**：`GPT_API_KEY` = 你的 API Key
+4. **🔑 设置环境变量**：
+   - `GPT_API_KEY` = 你的 AI API Key
+   - `ACCESS_PASSWORD` = 你设定的访问密码（用户需输入此密码才能用 AI）
    - 在 Vercel 项目设置 → Environment Variables 中添加
    - 这个 Key **只存在于 Vercel 服务器上**，不会暴露给前端用户
 5. 点击 Deploy！Vercel 会给你一个 `.vercel.app` 公开地址

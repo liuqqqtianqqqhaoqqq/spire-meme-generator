@@ -216,7 +216,38 @@ export default async function handler(req, res) {
   }
 
   try {
-    const { text, image, include_raw_cards } = req.body;
+    const { text, image, password, api_key, verify_only } = req.body;
+
+    // ── 访问控制 ──
+    const ACCESS_PASSWORD = process.env.ACCESS_PASSWORD;
+
+    // 纯验证请求（前端测试密码用）
+    if (verify_only) {
+      if (ACCESS_PASSWORD && password === ACCESS_PASSWORD) {
+        return res.status(200).json({ ok: true });
+      }
+      return res.status(403).json({ error: "wrong_password" });
+    }
+
+    // 确定使用哪个 Key
+    let activeKey = null;
+
+    // 方式1：密码解锁 → 使用站长的 Key
+    if (ACCESS_PASSWORD && password === ACCESS_PASSWORD) {
+      activeKey = API_KEY;
+    }
+    // 方式2：用户自带 Key
+    if (api_key && api_key.startsWith("sk-")) {
+      activeKey = api_key;
+    }
+
+    // 两种方式都没有 → 拒绝
+    if (!activeKey) {
+      return res.status(403).json({
+        error: "未解锁",
+        message: "请通过密码解锁或提供自有 API Key"
+      });
+    }
 
     if (!text && !image) {
       return res.status(400).json({ error: "请提供 text 或 image 参数" });
@@ -256,7 +287,7 @@ export default async function handler(req, res) {
     messages.push({ role: "user", content: userContent });
 
     // 调用 AI
-    const aiResponse = await callAI(messages);
+    const aiResponse = await callAI(messages, activeKey);
 
     // 解析 JSON
     let result;
@@ -331,12 +362,12 @@ export default async function handler(req, res) {
 /**
  * 调用 AI API
  */
-async function callAI(messages) {
+async function callAI(messages, apiKey = API_KEY) {
   const payload = {
     model: MODEL,
     messages: messages,
     max_tokens: 2048,
-    temperature: 0.8,  // 稍高温度让梗更随机有趣
+    temperature: 0.8,
   };
 
   const controller = new AbortController();
@@ -346,7 +377,7 @@ async function callAI(messages) {
     const response = await fetch(API_URL, {
       method: "POST",
       headers: {
-        "Authorization": `Bearer ${API_KEY}`,
+        "Authorization": `Bearer ${apiKey}`,
         "Content-Type": "application/json",
       },
       body: JSON.stringify(payload),
