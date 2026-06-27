@@ -455,6 +455,31 @@ async function analyzeAI(){
   document.getElementById('results').classList.remove('show');
   document.getElementById('btnAI').disabled=true;
 
+  // ── 方式1：自有Key → 浏览器直接调API（绕过Vercel限制） ──
+  if(userKey && !aiUnlocked){
+    try{
+      const msgs=[{role:'user',content:text||'分析图片'}];
+      if(imgB64){msgs[0].content=[{type:'text',text:text||'分析这张图片'},{type:'image_url',image_url:{url:`data:image/png;base64,${imgB64}`}}];}
+      const resp=await fetch('https://api-slb.packyapi.com/v1/chat/completions',{
+        method:'POST',
+        headers:{'Content-Type':'application/json','Authorization':'Bearer '+userKey},
+        body:JSON.stringify({model:'gpt-5.5',messages:msgs,max_tokens:800,temperature:0.8})
+      });
+      if(resp.ok){
+        const data=await resp.json();
+        const raw=data.choices[0].message.content;
+        // 简单解析卡牌名
+        const nameMatch=raw.match(/凡庸|偏差认知|鬼抽|还在启动|回响形态|循环|裂变|耗尽|内核加速|自我修复|重启|碎片整理|硬化|搜寻|混沌|机器学习|伤口|创造性AI|精良改造|万物一心|第四强|虚无/);
+        const name=nameMatch?nameMatch[0]:'偏差认知';
+        loader(false);
+        render({analysis:'AI 分析（浏览器直连）',cards:[{name,cost:'1',cost_color:'gold',card_type:'AI生成',rarity:'rare',character:'defect',effect:raw.slice(0,300),flavor:'「浏览器直连 AI 生成」',severity:'funny'}]},text);
+        document.getElementById('btnAI').disabled=false;
+        return;
+      }
+    }catch(e){console.log('浏览器直连失败，回退服务器:',e.message);}
+  }
+
+  // ── 方式2：密码解锁 → 服务器代理 ──
   try{
     const apiUrl=window.location.hostname==='localhost'?'http://localhost:8765/api/analyze':'/api/analyze';
     const body={text:text||undefined};
