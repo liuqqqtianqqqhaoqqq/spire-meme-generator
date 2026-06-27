@@ -128,7 +128,6 @@ let savedKey='';
 // 初始化：读localStorage
 try{savedKey=localStorage.getItem('sts_key')||''}catch(e){}
 if(savedKey){document.getElementById('keyInput').value=savedKey.slice(0,8)+'***';document.getElementById('keyHint').textContent='✅ 已保存';document.getElementById('keyHint').className='key-saved'}
-document.getElementById('keyInput').onfocus=function(){if(savedKey)this.value=''}
 
 // 保存Key
 function saveKey(){
@@ -144,11 +143,13 @@ function saveKey(){
 }
 document.getElementById('keyInput').onchange=saveKey;
 document.getElementById('keyInput').onblur=saveKey;
+document.getElementById('keyInput').oninput=function(){if(this.value.startsWith('sk-')&&this.value.length>10)saveKey()};
 
 async function go(){
   const text=document.getElementById('textInput').value.trim();
   if(!text){t('请输入文字');return}
-  if(!savedKey){saveKey();if(!savedKey){t('请先填写API Key');return}}
+  saveKey();
+  if(!savedKey){t('请先填写API Key');return}
 
   showLoader(true);
   document.getElementById('result').classList.remove('show');
